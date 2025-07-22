@@ -26,6 +26,7 @@ import html2canvas from "html2canvas"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { DigitalCard } from "@/components/digital-card"
 import { getMemberById } from "@/ai/flows/get-member-by-id"
+import { useSearchParams, useRouter } from 'next/navigation'
 
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -55,12 +56,14 @@ function fileToDataUrl(file: File): Promise<string> {
     });
 }
 
-export default function MembershipPage({ searchParams }: { searchParams: { tab?: string; memberId?: string } }) {
+export default function MembershipPage() {
     const { toast } = useToast();
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     
-    const initialTab = searchParams.tab || "registration";
+    const initialTab = searchParams.get("tab") || "registration";
     const [activeTab, setActiveTab] = useState(initialTab);
 
     const [selectedMemberForCard, setSelectedMemberForCard] = useState<MemberData | null>(null);
@@ -69,10 +72,11 @@ export default function MembershipPage({ searchParams }: { searchParams: { tab?:
     const cardRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+      const memberId = searchParams.get("memberId");
       const fetchMemberForCard = async () => {
-        if (searchParams.memberId) {
+        if (memberId) {
           try {
-            const result = await getMemberById({ id: searchParams.memberId });
+            const result = await getMemberById({ id: memberId });
             if (result.member) {
               setSelectedMemberForCard(result.member);
               setActiveTab("card");
@@ -94,7 +98,7 @@ export default function MembershipPage({ searchParams }: { searchParams: { tab?:
       };
       
       fetchMemberForCard();
-    }, [searchParams.memberId, toast]);
+    }, [searchParams, toast]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
