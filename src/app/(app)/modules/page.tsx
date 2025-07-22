@@ -1,14 +1,13 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpenCheck, Download, Video } from "lucide-react";
+import { BookOpenCheck, Download, Video, Frown, BookDashed } from "lucide-react";
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { getModules, ModuleData } from '@/ai/flows/get-modules';
 
-const modules = [
-  { title: "Modul MAPABA", description: "Materi dasar untuk Masa Penerimaan Anggota Baru.", category: "Kaderisasi Formal" },
-  { title: "Modul PKD", description: "Materi untuk Pelatihan Kader Dasar.", category: "Kaderisasi Formal" },
-  { title: "Modul PKL", description: "Materi lanjutan untuk Pelatihan Kader Lanjut.", category: "Kaderisasi Formal" },
-  { title: "Materi Aswaja", description: "Kumpulan materi Ahlussunnah Wal Jamaah.", category: "Materi Pendukung" },
-  { title: "Modul Ke-SLO-an", description: "Modul khusus dari Lembaga SLO.", category: "Modul Khusus" },
-];
 
 const videos = [
     { title: "Kajian Sejarah PMII", description: "Video dokumenter perjalanan PMII dari masa ke masa." },
@@ -16,6 +15,91 @@ const videos = [
 ];
 
 export default function ModulesPage() {
+  const [modules, setModules] = useState<ModuleData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchModules = async () => {
+      try {
+        setIsLoading(true);
+        setError('');
+        const result = await getModules();
+        setModules(result.modules);
+      } catch (err) {
+        setError('Gagal memuat data modul. Silakan coba lagi nanti.');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchModules();
+  }, []);
+
+  const renderModuleList = () => {
+    if (isLoading) {
+      return (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <Alert variant="destructive">
+          <Frown className="h-4 w-4" />
+          <AlertTitle>Terjadi Kesalahan</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      );
+    }
+
+    if (modules.length === 0) {
+      return (
+        <Alert>
+          <BookDashed className="h-4 w-4" />
+          <AlertTitle>Belum Ada Modul</AlertTitle>
+          <AlertDescription>
+            Saat ini belum ada modul kaderisasi yang ditambahkan ke sistem.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+
+    return (
+       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {modules.map((module) => (
+            <Card key={module.id} className="flex flex-col">
+              <CardHeader>
+                <CardTitle className="font-headline">{module.title}</CardTitle>
+                <CardDescription>{module.category}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow flex flex-col">
+                <p className="text-sm mb-4 font-body flex-grow">{module.description}</p>
+                <Button className="w-full mt-auto" disabled={!module.fileUrl}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+    );
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -25,23 +109,7 @@ export default function ModulesPage() {
 
       <section>
         <h2 className="text-2xl font-semibold font-headline mb-4 flex items-center"><BookOpenCheck className="mr-3 text-primary"/>Modul Kaderisasi</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {modules.map((module, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <CardTitle className="font-headline">{module.title}</CardTitle>
-                <CardDescription>{module.category}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col justify-between h-full">
-                <p className="text-sm mb-4 font-body">{module.description}</p>
-                <Button className="w-full mt-auto">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {renderModuleList()}
       </section>
 
       <section>
