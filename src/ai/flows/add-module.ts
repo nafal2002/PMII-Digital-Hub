@@ -61,7 +61,7 @@ const addModuleFlow = ai.defineFlow(
 
       // Send notification, but don't block the response if it fails
       try {
-        const message = `*Modul Baru Ditambahkan!*\n\n*Judul:* ${input.title}\n*Kategori:* ${input.category}\n\nModul baru telah berhasil ditambahkan ke sistem.`;
+        const message = `✅ *Modul Baru Ditambahkan!*\n\n*Judul:* ${input.title}\n*Kategori:* ${input.category}\n\nModul baru telah berhasil ditambahkan ke sistem.`;
         await sendTelegramNotification({ text: message });
       } catch (notificationError) {
         console.error("Failed to send Telegram notification:", notificationError);

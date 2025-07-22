@@ -11,8 +11,9 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { uploadFileFromDataUri, deleteFileFromUrl } from '@/lib/firebase-storage';
+import { sendTelegramNotification } from './send-telegram-notification';
 
 
 const UpdateModuleInputSchema = z.object({
@@ -55,6 +56,15 @@ const updateModuleFlow = ai.defineFlow(
 
       await updateDoc(moduleRef, dataToUpdate);
       console.log('Document with ID updated: ', id);
+      
+      // Send notification
+      try {
+        const message = `✏️ *Modul Diperbarui!*\n\n*Judul:* ${title}\n*Kategori:* ${category}\n\nPerubahan pada modul telah berhasil disimpan.`;
+        await sendTelegramNotification({ text: message });
+      } catch (notificationError) {
+        console.error("Failed to send Telegram notification:", notificationError);
+      }
+
       return { success: true };
     } catch (error) {
       console.error('Error updating document: ', error);
