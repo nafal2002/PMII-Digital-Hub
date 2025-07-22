@@ -42,11 +42,10 @@ const addModuleFlow = ai.defineFlow(
     outputSchema: AddModuleOutputSchema,
   },
   async (input) => {
-    
     if (input.uploadCode !== 'pmii2025') {
       return { success: false, error: 'Kode sandi tidak valid.' };
     }
-      
+
     try {
       let fileUrl: string | undefined = undefined;
 
@@ -72,7 +71,7 @@ const addModuleFlow = ai.defineFlow(
       console.error('Error adding document: ', error);
       return {
         success: false,
-        error: 'Terjadi kesalahan saat menambahkan modul.'
+        error: 'Terjadi kesalahan saat menambahkan modul.',
       };
     }
   }
