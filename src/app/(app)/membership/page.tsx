@@ -16,17 +16,16 @@ import {
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Logo } from "@/components/icons"
 import { useToast } from "@/hooks/use-toast"
 import { addMember } from "@/ai/flows/add-member"
-import { useState, useRef } from "react"
-import { Loader2, Download, UserPlus, QrCode } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Loader2, Download, UserPlus } from "lucide-react"
 import { MemberList } from "./member-list"
 import { MemberData } from "@/ai/flows/get-members"
 import html2canvas from "html2canvas"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import QRCode from "react-qr-code";
+import { DigitalCard } from "@/components/digital-card"
+
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -62,8 +61,15 @@ export default function MembershipPage() {
     const [activeTab, setActiveTab] = useState("registration");
     const [selectedMemberForCard, setSelectedMemberForCard] = useState<MemberData | null>(null);
     const [key, setKey] = useState(Date.now()); // Key to re-render MemberList
+    const [originUrl, setOriginUrl] = useState('');
 
     const cardRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setOriginUrl(window.location.origin);
+        }
+    }, []);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -154,22 +160,6 @@ export default function MembershipPage() {
         setIsDownloading(false);
       }
     };
-    
-    const cardData = selectedMemberForCard || {
-        id: 'placeholder-id',
-        fullName: 'SAHABAT NAMA',
-        nim: '1234567890',
-        faculty: 'Fakultas',
-        year: '2024',
-        photoUrl: '',
-    };
-    
-    const fallbackInitial = cardData.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
-    
-    const avatarImageSrc = cardData.photoUrl 
-        ? cardData.photoUrl 
-        : `https://api.dicebear.com/8.x/initials/svg?seed=${cardData.fullName}`;
-
 
   return (
     <div className="space-y-8">
@@ -274,39 +264,8 @@ export default function MembershipPage() {
                     <CardContent className="flex flex-col items-center justify-center gap-6">
                        {selectedMemberForCard ? (
                         <>
-                            <div 
-                                ref={cardRef} 
-                                className="w-full max-w-sm bg-card text-card-foreground rounded-xl shadow-lg border-4 border-green-600 overflow-hidden"
-                            >
-                                <div className="p-4 bg-green-600 text-primary-foreground flex justify-between items-center">
-                                     <div>
-                                        <h3 className="font-headline text-lg font-bold">KARTU ANGGOTA</h3>
-                                        <p className="font-body text-xs opacity-90">Pergerakan Mahasiswa Islam Indonesia</p>
-                                    </div>
-                                    <Logo className="w-12 h-12" />
-                                </div>
-                                <div className="p-4 flex gap-4">
-                                     <Avatar className="w-20 h-20 rounded-md border-4 border-white shadow-md">
-                                        <AvatarImage src={avatarImageSrc} data-ai-hint="person portrait" />
-                                        <AvatarFallback>{fallbackInitial}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-grow">
-                                        <p className="font-headline font-bold text-base truncate">{cardData.fullName.toUpperCase()}</p>
-                                        <p className="font-body text-sm text-muted-foreground">{cardData.nim}</p>
-                                        <p className="font-body text-sm text-muted-foreground">{cardData.faculty} - {cardData.year}</p>
-                                    </div>
-                                </div>
-                                <div className="bg-muted/50 p-4 flex gap-4 items-center">
-                                    <div className="bg-white p-1 rounded-md">
-                                        <QRCode value={cardData.id} size={64} />
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                        <p className="font-bold">ID Anggota:</p>
-                                        <p className="font-mono">{cardData.id}</p>
-                                        <p className="mt-1">Pindai untuk verifikasi keaslian kartu.</p>
-                                    </div>
-                                </div>
-                            </div>
+                           <DigitalCard ref={cardRef} member={selectedMemberForCard} verificationUrl={`${originUrl}/verify/${selectedMemberForCard.id}`} />
+
                             <Button onClick={handleDownload} disabled={isDownloading}>
                                 {isDownloading ? (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
