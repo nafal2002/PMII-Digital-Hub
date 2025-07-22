@@ -21,11 +21,12 @@ import { Logo } from "@/components/icons"
 import { useToast } from "@/hooks/use-toast"
 import { addMember } from "@/ai/flows/add-member"
 import { useState, useRef } from "react"
-import { Loader2, Download, UserPlus } from "lucide-react"
+import { Loader2, Download, UserPlus, QrCode } from "lucide-react"
 import { MemberList } from "./member-list"
 import { MemberData } from "@/ai/flows/get-members"
 import html2canvas from "html2canvas"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import QRCode from "react-qr-code";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -133,7 +134,7 @@ export default function MembershipPage() {
             useCORS: true, 
             allowTaint: true,
             backgroundColor: null,
-            scale: 2 
+            scale: 3
         });
         const link = document.createElement('a');
         const fileName = selectedMemberForCard 
@@ -155,8 +156,11 @@ export default function MembershipPage() {
     };
     
     const cardData = selectedMemberForCard || {
+        id: 'placeholder-id',
         fullName: 'SAHABAT NAMA',
         nim: '1234567890',
+        faculty: 'Fakultas',
+        year: '2024',
         photoUrl: '',
     };
     
@@ -270,29 +274,37 @@ export default function MembershipPage() {
                     <CardContent className="flex flex-col items-center justify-center gap-6">
                        {selectedMemberForCard ? (
                         <>
-                            <div ref={cardRef} className="w-full max-w-md bg-gradient-to-br from-primary via-green-500 to-green-600 text-primary-foreground rounded-xl p-6 shadow-lg space-y-4">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h3 className="font-headline text-xl">KARTU ANGGOTA</h3>
-                                        <p className="font-body text-sm opacity-90">Pergerakan Mahasiswa Islam Indonesia</p>
+                            <div 
+                                ref={cardRef} 
+                                className="w-full max-w-sm bg-card text-card-foreground rounded-xl shadow-lg border-4 border-green-600 overflow-hidden"
+                            >
+                                <div className="p-4 bg-green-600 text-primary-foreground flex justify-between items-center">
+                                     <div>
+                                        <h3 className="font-headline text-lg font-bold">KARTU ANGGOTA</h3>
+                                        <p className="font-body text-xs opacity-90">Pergerakan Mahasiswa Islam Indonesia</p>
                                     </div>
                                     <Logo className="w-12 h-12" />
                                 </div>
-                                <div className="flex items-center gap-4 pt-4">
-                                    <Avatar className="w-20 h-20 border-4 border-white">
+                                <div className="p-4 flex gap-4">
+                                     <Avatar className="w-20 h-20 rounded-md border-4 border-white shadow-md">
                                         <AvatarImage src={avatarImageSrc} data-ai-hint="person portrait" />
                                         <AvatarFallback>{fallbackInitial}</AvatarFallback>
                                     </Avatar>
-                                    <div>
-                                        <p className="font-body text-xs">Nama</p>
-                                        <h4 className="font-headline text-lg">{cardData.fullName.toUpperCase()}</h4>
-                                        <p className="font-body text-xs mt-1">NIM</p>
-                                        <p className="font-body font-semibold">{cardData.nim}</p>
+                                    <div className="flex-grow">
+                                        <p className="font-headline font-bold text-base truncate">{cardData.fullName.toUpperCase()}</p>
+                                        <p className="font-body text-sm text-muted-foreground">{cardData.nim}</p>
+                                        <p className="font-body text-sm text-muted-foreground">{cardData.faculty} - {cardData.year}</p>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="font-body text-xs">Ketua Cabang</p>
-                                    <p className="font-headline mt-2">.....................</p>
+                                <div className="bg-muted/50 p-4 flex gap-4 items-center">
+                                    <div className="bg-white p-1 rounded-md">
+                                        <QRCode value={cardData.id} size={64} />
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                        <p className="font-bold">ID Anggota:</p>
+                                        <p className="font-mono">{cardData.id}</p>
+                                        <p className="mt-1">Pindai untuk verifikasi keaslian kartu.</p>
+                                    </div>
                                 </div>
                             </div>
                             <Button onClick={handleDownload} disabled={isDownloading}>
