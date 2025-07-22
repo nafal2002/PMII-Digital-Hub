@@ -21,12 +21,14 @@ const UpdateModuleInputSchema = z.object({
   description: z.string().describe('The new description of the module.'),
   category: z.string().describe('The new category of the module.'),
   fileDataUri: z.string().optional().describe("A new module file (e.g., PDF) as a data URI. If provided, replaces the existing file."),
-  currentFileUrl: z.string().optional().describe('The current file URL. Used to delete the old file if a new one is uploaded.')
+  currentFileUrl: z.string().optional().describe('The current file URL. Used to delete the old file if a new one is uploaded.'),
+  uploadCode: z.string().describe('A verification code required to update the module.'),
 });
 export type UpdateModuleInput = z.infer<typeof UpdateModuleInputSchema>;
 
 const UpdateModuleOutputSchema = z.object({
   success: z.boolean().describe('Whether the module was updated successfully.'),
+  error: z.string().optional().describe('An error message if the operation failed.'),
 });
 export type UpdateModuleOutput = z.infer<typeof UpdateModuleOutputSchema>;
 
@@ -40,7 +42,12 @@ const updateModuleFlow = ai.defineFlow(
     inputSchema: UpdateModuleInputSchema,
     outputSchema: UpdateModuleOutputSchema,
   },
-  async ({ id, title, description, category, fileDataUri, currentFileUrl }) => {
+  async ({ id, title, description, category, fileDataUri, currentFileUrl, uploadCode }) => {
+
+    if (uploadCode !== 'pmii2025') {
+        return { success: false, error: 'Kode sandi tidak valid.' };
+    }
+
     try {
       const moduleRef = doc(db, 'modules', id);
       const dataToUpdate: { [key: string]: any } = { title, description, category };
@@ -60,7 +67,10 @@ const updateModuleFlow = ai.defineFlow(
       return { success: true };
     } catch (error) {
       console.error('Error updating document: ', error);
-      return { success: false };
+      return { 
+          success: false, 
+          error: 'Terjadi kesalahan saat memperbarui modul.'
+      };
     }
   }
 );

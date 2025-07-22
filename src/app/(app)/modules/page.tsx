@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getModules, ModuleData } from '@/ai/flows/get-modules';
 import { addModule } from '@/ai/flows/add-module';
-import { updateModule, UpdateModuleInput } from '@/ai/flows/update-module';
+import { updateModule } from '@/ai/flows/update-module';
 import { deleteModule } from '@/ai/flows/delete-module';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
@@ -41,13 +41,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { deleteFileFromUrl } from '@/lib/firebase-storage';
 
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED_FILE_TYPES = ["application/pdf"];
 
 const fileSchema = z.instanceof(File).optional()
-  .refine((file) => !file || file.size <= MAX_FILE_SIZE, `Ukuran file maksimal adalah 5MB.`)
+  .refine((file) => !file || file.size <= MAX_FILE_SIZE, `Ukuran file maksimal adalah 10MB.`)
   .refine(
     (file) => !file || ACCEPTED_FILE_TYPES.includes(file.type),
     "Hanya format .pdf yang didukung."
@@ -58,6 +59,7 @@ const addFormSchema = z.object({
   category: z.string().min(3, "Kategori harus diisi."),
   description: z.string().min(10, "Deskripsi harus lebih dari 10 karakter."),
   file: fileSchema,
+  uploadCode: z.string().refine(val => val === 'pmii2025', { message: "Kode sandi tidak valid."})
 })
 
 const editFormSchema = z.object({
@@ -65,6 +67,7 @@ const editFormSchema = z.object({
   category: z.string().min(3, "Kategori harus diisi."),
   description: z.string().min(10, "Deskripsi harus lebih dari 10 karakter."),
   file: fileSchema,
+  uploadCode: z.string().refine(val => val === 'pmii2025', { message: "Kode sandi tidak valid."})
 });
 
 type EditFormValues = z.infer<typeof editFormSchema>;
@@ -88,6 +91,7 @@ function EditModuleDialog({ module, onEdited, ...props }: { module: ModuleData, 
       title: module.title,
       category: module.category,
       description: module.description,
+      uploadCode: "",
     },
   });
 
@@ -106,13 +110,14 @@ function EditModuleDialog({ module, onEdited, ...props }: { module: ModuleData, 
         description: values.description,
         fileDataUri: fileDataUri,
         currentFileUrl: module.fileUrl,
+        uploadCode: values.uploadCode,
       });
 
       if (result.success) {
         toast({ title: "Modul Diperbarui", description: "Perubahan modul telah disimpan." });
         onEdited();
       } else {
-        toast({ variant: "destructive", title: "Gagal Memperbarui", description: "Tidak dapat menyimpan perubahan." });
+        toast({ variant: "destructive", title: "Gagal Memperbarui", description: result.error || "Tidak dapat menyimpan perubahan." });
       }
     } catch (error) {
       toast({ variant: "destructive", title: "Gagal Memperbarui", description: "Terjadi kesalahan sistem." });
@@ -126,7 +131,7 @@ function EditModuleDialog({ module, onEdited, ...props }: { module: ModuleData, 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Ubah Modul</DialogTitle>
-          <DialogDescription>Lakukan perubahan pada detail modul di bawah ini.</DialogDescription>
+          <DialogDescription>Lakukan perubahan pada detail modul di bawah ini. Kode sandi wajib diisi.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -158,6 +163,9 @@ function EditModuleDialog({ module, onEdited, ...props }: { module: ModuleData, 
               </FormItem>
               )}
             />
+             <FormField control={form.control} name="uploadCode" render={({ field }) => (
+                <FormItem><FormLabel>Kode Sandi Admin</FormLabel><FormControl><Input type="password" {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>
+            )}/>
             <div className="flex justify-end gap-2">
                <Button type="button" variant="ghost" onClick={() => props.onOpenChange?.(false)} disabled={isLoading}>Batal</Button>
                <Button type="submit" disabled={isLoading}>
@@ -364,6 +372,7 @@ export default function ModulesPage() {
       category: "",
       description: "",
       file: undefined,
+      uploadCode: "",
     },
   })
 
@@ -380,6 +389,7 @@ export default function ModulesPage() {
             category: values.category,
             description: values.description,
             fileDataUri: fileDataUri,
+            uploadCode: values.uploadCode,
         });
 
         if (result.success) {
@@ -397,7 +407,7 @@ export default function ModulesPage() {
              toast({
                 variant: "destructive",
                 title: "Gagal Menambahkan!",
-                description: "Terjadi kesalahan saat menyimpan modul.",
+                description: result.error || "Terjadi kesalahan saat menyimpan modul.",
             });
         }
     } catch (error) {
@@ -439,7 +449,7 @@ export default function ModulesPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline">Tambah Modul Baru</CardTitle>
-                    <CardDescription>Isi detail modul untuk menambahkannya ke dalam daftar.</CardDescription>
+                    <CardDescription>Isi detail modul untuk menambahkannya ke dalam daftar. Wajib mengisi kode sandi.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
@@ -466,7 +476,14 @@ export default function ModulesPage() {
                                             disabled={isLoading} 
                                         />
                                     </FormControl>
-                                    <FormDescription>File PDF, ukuran maksimal 5MB.</FormDescription>
+                                    <FormDescription>File PDF, ukuran maksimal 10MB.</FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                             )}/>
+                             <FormField control={form.control} name="uploadCode" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Kode Sandi Admin</FormLabel>
+                                    <FormControl><Input type="password" placeholder="Masukkan kode sandi" {...field} disabled={isLoading} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                              )}/>

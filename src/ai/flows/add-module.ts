@@ -20,12 +20,14 @@ const AddModuleInputSchema = z.object({
   description: z.string().describe('Description of the module.'),
   category: z.string().describe('Category of the module.'),
   fileDataUri: z.string().optional().describe("A module file (e.g., PDF) as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+  uploadCode: z.string().describe('A verification code required to upload the module.'),
 });
 export type AddModuleInput = z.infer<typeof AddModuleInputSchema>;
 
 const AddModuleOutputSchema = z.object({
   success: z.boolean().describe('Whether the module was added successfully.'),
   moduleId: z.string().optional().describe('The ID of the newly created module document.'),
+  error: z.string().optional().describe('An error message if the operation failed.'),
 });
 export type AddModuleOutput = z.infer<typeof AddModuleOutputSchema>;
 
@@ -40,6 +42,11 @@ const addModuleFlow = ai.defineFlow(
     outputSchema: AddModuleOutputSchema,
   },
   async (input) => {
+    
+    if (input.uploadCode !== 'pmii2025') {
+        return { success: false, error: 'Kode sandi tidak valid.' };
+    }
+      
     try {
       let fileUrl: string | undefined = undefined;
 
@@ -65,6 +72,7 @@ const addModuleFlow = ai.defineFlow(
       console.error('Error adding document: ', error);
       return {
         success: false,
+        error: 'Terjadi kesalahan saat menambahkan modul.'
       };
     }
   }
