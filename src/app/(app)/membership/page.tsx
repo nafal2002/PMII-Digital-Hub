@@ -19,9 +19,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Logo } from "@/components/icons"
 import { useToast } from "@/hooks/use-toast"
 import { addMember } from "@/ai/flows/add-member"
-import { useState } from "react"
-import { Loader2 } from "lucide-react"
+import { useState, useRef } from "react"
+import { Loader2, Download } from "lucide-react"
 import { MemberList } from "./member-list"
+import html2canvas from "html2canvas"
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Nama lengkap harus diisi."),
@@ -35,6 +36,9 @@ const formSchema = z.object({
 export default function MembershipPage() {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
+    const cardRef = useRef<HTMLDivElement>(null);
+
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -74,6 +78,32 @@ export default function MembershipPage() {
             setIsLoading(false);
         }
     }
+
+    const handleDownload = async () => {
+      if (!cardRef.current) return;
+      setIsDownloading(true);
+      try {
+        const canvas = await html2canvas(cardRef.current, { 
+            useCORS: true, 
+            backgroundColor: null,
+            scale: 2 
+        });
+        const link = document.createElement('a');
+        link.download = 'kartu-anggota-pmii.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (error) {
+        console.error("Error downloading card:", error);
+        toast({
+            variant: "destructive",
+            title: "Unduh Gagal!",
+            description: "Tidak dapat mengunduh kartu. Silakan coba lagi.",
+        });
+      } finally {
+        setIsDownloading(false);
+      }
+    };
+
 
   return (
     <div className="space-y-8">
@@ -142,10 +172,10 @@ export default function MembershipPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="font-headline">Kartu Anggota Digital</CardTitle>
-                        <CardDescription>Contoh kartu tanda anggota PMII.</CardDescription>
+                        <CardDescription>Pratinjau kartu tanda anggota PMII. Klik tombol di bawah untuk mengunduh.</CardDescription>
                     </CardHeader>
-                    <CardContent className="flex justify-center items-center">
-                        <div className="w-full max-w-md bg-gradient-to-br from-primary via-green-500 to-green-600 text-primary-foreground rounded-xl p-6 shadow-lg space-y-4">
+                    <CardContent className="flex flex-col items-center justify-center gap-6">
+                        <div ref={cardRef} className="w-full max-w-md bg-gradient-to-br from-primary via-green-500 to-green-600 text-primary-foreground rounded-xl p-6 shadow-lg space-y-4">
                             <div className="flex justify-between items-start">
                                 <div>
                                     <h3 className="font-headline text-xl">KARTU ANGGOTA</h3>
@@ -170,6 +200,14 @@ export default function MembershipPage() {
                                 <p className="font-headline mt-2">.....................</p>
                             </div>
                         </div>
+                        <Button onClick={handleDownload} disabled={isDownloading}>
+                            {isDownloading ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Download className="mr-2 h-4 w-4" />
+                            )}
+                            Unduh Kartu
+                        </Button>
                     </CardContent>
                 </Card>
             </TabsContent>
