@@ -18,13 +18,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
 import { addMember } from "@/ai/flows/add-member"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Loader2, Download, UserPlus } from "lucide-react"
 import { MemberList } from "./member-list"
 import { MemberData } from "@/ai/flows/get-members"
 import html2canvas from "html2canvas"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { DigitalCard } from "@/components/digital-card"
+import { getMemberById } from "@/ai/flows/get-member-by-id"
 
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -54,15 +55,46 @@ function fileToDataUrl(file: File): Promise<string> {
     });
 }
 
-export default function MembershipPage() {
+export default function MembershipPage({ searchParams }: { searchParams: { tab?: string; memberId?: string } }) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
-    const [activeTab, setActiveTab] = useState("registration");
+    
+    const initialTab = searchParams.tab || "registration";
+    const [activeTab, setActiveTab] = useState(initialTab);
+
     const [selectedMemberForCard, setSelectedMemberForCard] = useState<MemberData | null>(null);
     const [key, setKey] = useState(Date.now()); // Key to re-render MemberList
 
     const cardRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      const fetchMemberForCard = async () => {
+        if (searchParams.memberId) {
+          try {
+            const result = await getMemberById({ id: searchParams.memberId });
+            if (result.member) {
+              setSelectedMemberForCard(result.member);
+              setActiveTab("card");
+            } else {
+              toast({
+                variant: "destructive",
+                title: "Gagal Memuat Anggota",
+                description: "Anggota yang dipilih tidak ditemukan.",
+              });
+            }
+          } catch (error) {
+            toast({
+              variant: "destructive",
+              title: "Gagal Memuat Anggota",
+              description: "Terjadi kesalahan saat memuat data anggota untuk kartu.",
+            });
+          }
+        }
+      };
+      
+      fetchMemberForCard();
+    }, [searchParams.memberId, toast]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -119,12 +151,7 @@ export default function MembershipPage() {
             setIsLoading(false);
         }
     }
-
-    const handleSelectMemberForCard = (member: MemberData) => {
-        setSelectedMemberForCard(member);
-        setActiveTab("card");
-    };
-
+    
     const handleDownload = async () => {
       if (!cardRef.current) return;
       setIsDownloading(true);
@@ -233,10 +260,10 @@ export default function MembershipPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="font-headline">Daftar Anggota Terdaftar</CardTitle>
-                        <CardDescription>Berikut adalah daftar anggota yang telah bergabung. Pilih anggota untuk membuat kartu digital.</CardDescription>
+                        <CardDescription>Berikut adalah daftar anggota yang telah bergabung. Pilih anggota untuk melihat profil detail.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <MemberList key={key} onSelectMember={handleSelectMemberForCard} />
+                        <MemberList key={key} />
                     </CardContent>
                 </Card>
             </TabsContent>
@@ -250,7 +277,7 @@ export default function MembershipPage() {
                             </CardDescription>
                         ) : (
                              <CardDescription>
-                                Pilih seorang anggota dari tab "Daftar Anggota" untuk membuat kartu mereka.
+                                Pilih seorang anggota dan klik "Buat Kartu Digital" dari halaman profil mereka.
                             </CardDescription>
                         )}
                     </CardHeader>
@@ -273,7 +300,7 @@ export default function MembershipPage() {
                             <UserPlus className="h-4 w-4" />
                             <AlertTitle>Pilih Anggota</AlertTitle>
                             <AlertDescription>
-                                Silakan kembali ke tab "Daftar Anggota" dan pilih salah satu anggota untuk dibuatkan kartu.
+                                Silakan kembali ke tab "Daftar Anggota", pilih anggota untuk dilihat profilnya, lalu buat kartu dari sana.
                             </AlertDescription>
                         </Alert>
                        )}

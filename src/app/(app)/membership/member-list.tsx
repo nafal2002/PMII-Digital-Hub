@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { getMembers, MemberData } from '@/ai/flows/get-members';
 import {
   Table,
@@ -13,14 +14,10 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Frown, Users, CreditCard } from 'lucide-react';
+import { Frown, Users, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-interface MemberListProps {
-    onSelectMember: (member: MemberData) => void;
-}
-
-export function MemberList({ onSelectMember }: MemberListProps) {
+export function MemberList() {
   const [members, setMembers] = useState<MemberData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -97,9 +94,11 @@ export function MemberList({ onSelectMember }: MemberListProps) {
                     <TableCell className="hidden lg:table-cell">{member.faculty}</TableCell>
                     <TableCell>{member.year}</TableCell>
                     <TableCell className="text-right">
-                        <Button variant="outline" size="sm" onClick={() => onSelectMember(member)}>
-                            <CreditCard className="mr-2 h-4 w-4" />
-                            Buat Kartu
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={`/membership/${member.id}`}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Lihat Profil
+                            </Link>
                         </Button>
                     </TableCell>
                 </TableRow>
