@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview A flow to add new modules to the Firestore database.
+ * @fileOverview A flow to add new modules to the Firestore database, including file upload.
  *
  * - addModule - A function that handles adding a new module.
  * - AddModuleInput - The input type for the addModule function.
@@ -13,12 +13,13 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { uploadFileFromDataUri } from '@/lib/firebase-storage';
 
 const AddModuleInputSchema = z.object({
   title: z.string().describe('Title of the module.'),
   description: z.string().describe('Description of the module.'),
   category: z.string().describe('Category of the module.'),
-  fileUrl: z.string().optional().describe('URL of the module file.'),
+  fileDataUri: z.string().optional().describe("A module file (e.g., PDF) as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
 });
 export type AddModuleInput = z.infer<typeof AddModuleInputSchema>;
 
@@ -40,7 +41,21 @@ const addModuleFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      const docRef = await addDoc(collection(db, 'modules'), input);
+      let fileUrl: string | undefined = undefined;
+
+      // If a file is provided, upload it and get the URL
+      if (input.fileDataUri) {
+        fileUrl = await uploadFileFromDataUri(input.fileDataUri, 'module-files');
+      }
+
+      const moduleData = {
+        title: input.title,
+        description: input.description,
+        category: input.category,
+        fileUrl: fileUrl,
+      };
+
+      const docRef = await addDoc(collection(db, 'modules'), moduleData);
       console.log('Document written with ID: ', docRef.id);
       return {
         success: true,

@@ -43,20 +43,40 @@ import {
 } from "@/components/ui/dialog"
 
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_FILE_TYPES = ["application/pdf"];
+
+const fileSchema = z.instanceof(File).optional()
+  .refine((file) => !file || file.size <= MAX_FILE_SIZE, `Ukuran file maksimal adalah 5MB.`)
+  .refine(
+    (file) => !file || ACCEPTED_FILE_TYPES.includes(file.type),
+    "Hanya format .pdf yang didukung."
+  );
+
 const addFormSchema = z.object({
   title: z.string().min(3, "Judul modul harus diisi."),
   category: z.string().min(3, "Kategori harus diisi."),
   description: z.string().min(10, "Deskripsi harus lebih dari 10 karakter."),
-  // file: z.instanceof(File).optional(), // TODO: Add file upload handling
+  file: fileSchema,
 })
 
 const editFormSchema = z.object({
   title: z.string().min(3, "Judul modul harus diisi."),
   category: z.string().min(3, "Kategori harus diisi."),
   description: z.string().min(10, "Deskripsi harus lebih dari 10 karakter."),
+  file: fileSchema,
 });
 
 type EditFormValues = z.infer<typeof editFormSchema>;
+
+function fileToDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
 
 function EditModuleDialog({ module, onEdited, ...props }: { module: ModuleData, onEdited: () => void } & ComponentProps<typeof Dialog>) {
   const { toast } = useToast();
@@ -74,9 +94,18 @@ function EditModuleDialog({ module, onEdited, ...props }: { module: ModuleData, 
   async function onSubmit(values: EditFormValues) {
     setIsLoading(true);
     try {
+      let fileDataUri: string | undefined = undefined;
+      if (values.file) {
+        fileDataUri = await fileToDataUrl(values.file);
+      }
+
       const result = await updateModule({
         id: module.id,
-        ...values,
+        title: values.title,
+        category: values.category,
+        description: values.description,
+        fileDataUri: fileDataUri,
+        currentFileUrl: module.fileUrl,
       });
 
       if (result.success) {
@@ -110,6 +139,25 @@ function EditModuleDialog({ module, onEdited, ...props }: { module: ModuleData, 
             <FormField control={form.control} name="description" render={({ field }) => (
                 <FormItem><FormLabel>Deskripsi Singkat</FormLabel><FormControl><Textarea {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>
             )}/>
+            <FormField
+              control={form.control}
+              name="file"
+              render={({ field }) => (
+              <FormItem>
+                  <FormLabel>Ganti File Modul (PDF)</FormLabel>
+                  <FormControl>
+                      <Input 
+                          type="file" 
+                          accept="application/pdf"
+                          onChange={(e) => field.onChange(e.target.files?.[0])} 
+                          disabled={isLoading} 
+                      />
+                  </FormControl>
+                  <FormDescription>Biarkan kosong jika tidak ingin mengganti file yang sudah ada.</FormDescription>
+                  <FormMessage />
+              </FormItem>
+              )}
+            />
             <div className="flex justify-end gap-2">
                <Button type="button" variant="ghost" onClick={() => props.onOpenChange?.(false)} disabled={isLoading}>Batal</Button>
                <Button type="submit" disabled={isLoading}>
@@ -167,6 +215,10 @@ function ModuleList({ onModuleChange }: { onModuleChange: () => void }) {
   const handleDeleteConfirm = async () => {
     if (!selectedModule) return;
     try {
+      // If there's a file, delete it from storage first
+      if (selectedModule.fileUrl) {
+          await deleteFileFromUrl(selectedModule.fileUrl);
+      }
       const result = await deleteModule({ id: selectedModule.id });
       if (result.success) {
         toast({ title: "Modul Dihapus", description: "Modul telah berhasil dihapus." });
@@ -282,7 +334,7 @@ function ModuleList({ onModuleChange }: { onModuleChange: () => void }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Anda Yakin?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus modul secara permanen dari server.
+              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus modul dan file terkait secara permanen dari server.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -303,6 +355,7 @@ export default function ModulesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("list");
   const [listKey, setListKey] = useState(Date.now());
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof addFormSchema>>({
     resolver: zodResolver(addFormSchema),
@@ -310,18 +363,23 @@ export default function ModulesPage() {
       title: "",
       category: "",
       description: "",
+      file: undefined,
     },
   })
 
   async function onSubmit(values: z.infer<typeof addFormSchema>) {
     setIsLoading(true);
     try {
-        // TODO: Handle file upload and get URL
+        let fileDataUri: string | undefined = undefined;
+        if (values.file) {
+            fileDataUri = await fileToDataUrl(values.file);
+        }
+
         const result = await addModule({
             title: values.title,
             category: values.category,
             description: values.description,
-            // fileUrl: "URL_from_upload" 
+            fileDataUri: fileDataUri,
         });
 
         if (result.success) {
@@ -330,6 +388,9 @@ export default function ModulesPage() {
                 description: "Modul baru telah berhasil disimpan.",
             });
             form.reset();
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
             setListKey(Date.now()); // Trigger re-fetch in ModuleList
             setActiveTab("list");
         } else {
@@ -392,21 +453,23 @@ export default function ModulesPage() {
                             <FormField control={form.control} name="description" render={({ field }) => (
                                 <FormItem><FormLabel>Deskripsi Singkat</FormLabel><FormControl><Textarea placeholder="Jelaskan secara singkat isi dari modul ini..." {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>
                             )}/>
-                             {/* <FormField control={form.control} name="file" render={({ field }) => (
+                             <FormField control={form.control} name="file" render={({ field: { onChange, value, ...rest } }) => (
                                 <FormItem>
                                     <FormLabel>File Modul (PDF)</FormLabel>
                                     <FormControl>
                                         <Input 
+                                            {...rest}
                                             type="file" 
                                             accept="application/pdf"
-                                            onChange={(e) => field.onChange(e.target.files?.[0])} 
+                                            ref={fileInputRef}
+                                            onChange={(e) => onChange(e.target.files?.[0])} 
                                             disabled={isLoading} 
                                         />
                                     </FormControl>
-                                    <FormDescription>File akan diunggah ke penyimpanan.</FormDescription>
+                                    <FormDescription>File PDF, ukuran maksimal 5MB.</FormDescription>
                                     <FormMessage />
                                 </FormItem>
-                             )}/> */}
+                             )}/>
                             <Button type="submit" disabled={isLoading}>
                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BookUp className="mr-2 h-4 w-4" />}
                                 Simpan Modul
