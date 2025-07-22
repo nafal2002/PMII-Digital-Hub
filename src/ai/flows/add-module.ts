@@ -20,7 +20,6 @@ const AddModuleInputSchema = z.object({
   description: z.string().describe('Description of the module.'),
   category: z.string().describe('Category of the module.'),
   fileDataUri: z.string().optional().describe("A module file (e.g., PDF) as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
-  uploadCode: z.string().describe('A verification code required to upload the module.'),
 });
 export type AddModuleInput = z.infer<typeof AddModuleInputSchema>;
 
@@ -42,10 +41,6 @@ const addModuleFlow = ai.defineFlow(
     outputSchema: AddModuleOutputSchema,
   },
   async (input) => {
-    if (input.uploadCode !== 'pmii2025') {
-      return { success: false, error: 'Kode sandi tidak valid.' };
-    }
-
     try {
       let fileUrl: string | undefined = undefined;
 
@@ -58,7 +53,6 @@ const addModuleFlow = ai.defineFlow(
         description: input.description,
         category: input.category,
         fileUrl: fileUrl,
-        status: 'approved', // Directly approve the module
       };
 
       const docRef = await addDoc(collection(db, 'modules'), moduleData);

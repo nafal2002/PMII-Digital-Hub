@@ -22,7 +22,6 @@ const UpdateModuleInputSchema = z.object({
   category: z.string().describe('The new category of the module.'),
   fileDataUri: z.string().optional().describe("A new module file (e.g., PDF) as a data URI. If provided, replaces the existing file."),
   currentFileUrl: z.string().optional().describe('The current file URL. Used to delete the old file if a new one is uploaded.'),
-  uploadCode: z.string().describe('A verification code required to update the module.'),
 });
 export type UpdateModuleInput = z.infer<typeof UpdateModuleInputSchema>;
 
@@ -42,12 +41,7 @@ const updateModuleFlow = ai.defineFlow(
     inputSchema: UpdateModuleInputSchema,
     outputSchema: UpdateModuleOutputSchema,
   },
-  async ({ id, title, description, category, fileDataUri, currentFileUrl, uploadCode }) => {
-
-    if (uploadCode !== 'pmii2025') {
-      return { success: false, error: 'Kode sandi tidak valid.' };
-    }
-
+  async ({ id, title, description, category, fileDataUri, currentFileUrl }) => {
     try {
       const moduleRef = doc(db, 'modules', id);
       const dataToUpdate: { [key: string]: any } = { title, description, category };

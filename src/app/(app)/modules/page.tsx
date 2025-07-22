@@ -59,7 +59,6 @@ const addFormSchema = z.object({
   category: z.string().min(3, "Kategori harus diisi."),
   description: z.string().min(10, "Deskripsi harus lebih dari 10 karakter."),
   file: fileSchema,
-  uploadCode: z.string().min(1, "Kode sandi harus diisi.")
 })
 
 const editFormSchema = z.object({
@@ -67,7 +66,6 @@ const editFormSchema = z.object({
   category: z.string().min(3, "Kategori harus diisi."),
   description: z.string().min(10, "Deskripsi harus lebih dari 10 karakter."),
   file: fileSchema,
-  uploadCode: z.string().min(1, "Kode sandi harus diisi.")
 });
 
 type EditFormValues = z.infer<typeof editFormSchema>;
@@ -91,7 +89,6 @@ function EditModuleDialog({ module, onEdited, ...props }: { module: ModuleData, 
       title: module.title,
       category: module.category,
       description: module.description,
-      uploadCode: "",
     },
   });
 
@@ -110,7 +107,6 @@ function EditModuleDialog({ module, onEdited, ...props }: { module: ModuleData, 
         description: values.description,
         fileDataUri: fileDataUri,
         currentFileUrl: module.fileUrl,
-        uploadCode: values.uploadCode,
       });
 
       if (result.success) {
@@ -131,7 +127,7 @@ function EditModuleDialog({ module, onEdited, ...props }: { module: ModuleData, 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Ubah Modul</DialogTitle>
-          <DialogDescription>Lakukan perubahan pada detail modul di bawah ini. Kode sandi wajib diisi.</DialogDescription>
+          <DialogDescription>Lakukan perubahan pada detail modul di bawah ini.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -163,9 +159,6 @@ function EditModuleDialog({ module, onEdited, ...props }: { module: ModuleData, 
               </FormItem>
               )}
             />
-             <FormField control={form.control} name="uploadCode" render={({ field }) => (
-                <FormItem><FormLabel>Kode Sandi Admin</FormLabel><FormControl><Input type="password" {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>
-            )}/>
             <div className="flex justify-end gap-2">
                <Button type="button" variant="ghost" onClick={() => props.onOpenChange?.(false)} disabled={isLoading}>Batal</Button>
                <Button type="submit" disabled={isLoading}>
@@ -369,7 +362,6 @@ export default function ModulesPage() {
       category: "",
       description: "",
       file: undefined,
-      uploadCode: "",
     },
   })
 
@@ -386,7 +378,6 @@ export default function ModulesPage() {
             category: values.category,
             description: values.description,
             fileDataUri: fileDataUri,
-            uploadCode: values.uploadCode,
         });
 
         if (result.success) {
@@ -446,7 +437,7 @@ export default function ModulesPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline">Tambah Modul Baru</CardTitle>
-                    <CardDescription>Isi detail modul untuk menambahkannya ke dalam daftar. Wajib mengisi kode sandi.</CardDescription>
+                    <CardDescription>Isi detail modul untuk menambahkannya ke dalam daftar.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
@@ -474,13 +465,6 @@ export default function ModulesPage() {
                                         />
                                     </FormControl>
                                     <FormDescription>File PDF, ukuran maksimal 10MB.</FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                             )}/>
-                             <FormField control={form.control} name="uploadCode" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Kode Sandi Admin</FormLabel>
-                                    <FormControl><Input type="password" placeholder="Masukkan kode sandi" {...field} disabled={isLoading} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                              )}/>
