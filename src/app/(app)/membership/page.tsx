@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast"
 import { addMember } from "@/ai/flows/add-member"
 import { useState } from "react"
 import { Loader2 } from "lucide-react"
+import { MemberList } from "./member-list"
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Nama lengkap harus diisi."),
@@ -78,12 +79,13 @@ export default function MembershipPage() {
     <div className="space-y-8">
         <div>
             <h1 className="text-3xl font-bold font-headline">Data Keanggotaan</h1>
-            <p className="text-muted-foreground">Formulir pendaftaran dan kartu anggota digital.</p>
+            <p className="text-muted-foreground">Formulir pendaftaran, daftar anggota, dan kartu anggota digital.</p>
         </div>
         <Tabs defaultValue="registration">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="registration">Pendaftaran Anggota</TabsTrigger>
-                <TabsTrigger value="card">Kartu Anggota Digital</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="registration">Pendaftaran</TabsTrigger>
+                <TabsTrigger value="list">Daftar Anggota</TabsTrigger>
+                <TabsTrigger value="card">Kartu Digital</TabsTrigger>
             </TabsList>
             <TabsContent value="registration">
                 <Card>
@@ -122,6 +124,17 @@ export default function MembershipPage() {
                                 </Button>
                             </form>
                         </Form>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="list">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline">Daftar Anggota Terdaftar</CardTitle>
+                        <CardDescription>Berikut adalah daftar anggota yang telah bergabung.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <MemberList />
                     </CardContent>
                 </Card>
             </TabsContent>
