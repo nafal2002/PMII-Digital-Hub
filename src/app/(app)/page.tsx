@@ -4,7 +4,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Lightbulb, ArrowRight, Users, BookOpen, Calendar, FileArchive } from "lucide-react";
+import { Lightbulb, ArrowRight, Users, BookOpen, Calendar, FileArchive, Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getMembers } from "@/ai/flows/get-members";
@@ -42,7 +42,7 @@ export default function Home() {
                 setMemberCount(result.members.length);
             } catch (error) {
                 console.error("Failed to fetch member count:", error);
-                setMemberCount(0);
+                setMemberCount(0); // Default to 0 on error
             }
         };
         fetchMemberCount();
@@ -50,42 +50,54 @@ export default function Home() {
 
   return (
     <div className="grid gap-6">
-       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="lg:col-span-1">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Total Anggota</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline text-2xl flex items-center">
+                    <Zap className="h-6 w-6 mr-3 text-yellow-500" />
+                    Selamat Datang di PMII Digital Hub
+                </CardTitle>
+                <CardDescription>
+                    Pusat informasi, komunikasi, dan manajemen digital untuk seluruh kader PMII. Jelajahi berbagai fitur yang tersedia untuk mendukung pergerakan.
+                </CardDescription>
             </CardHeader>
-            <CardContent>
-                 {memberCount !== null ? (
-                    <div className="text-2xl font-bold">{memberCount}</div>
-                ) : (
-                    <div className="h-8 w-1/3 bg-muted rounded-md animate-pulse"></div>
-                )}
-                <p className="text-xs text-muted-foreground">Anggota Terdaftar</p>
-            </CardContent>
         </Card>
-        {quickStats.map((stat, index) => (
-            <Card key={index}>
+
+       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="lg:col-span-1">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                    <stat.icon className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Total Anggota</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{stat.value}</div>
-                    <p className="text-xs text-muted-foreground">Tersedia di sistem</p>
+                    {memberCount !== null ? (
+                        <div className="text-2xl font-bold">{memberCount}</div>
+                    ) : (
+                        <div className="h-8 w-1/3 bg-muted rounded-md animate-pulse"></div>
+                    )}
+                    <p className="text-xs text-muted-foreground">Anggota Terdaftar</p>
                 </CardContent>
-                <CardFooter className="pt-0 pb-4">
-                    <Button size="sm" variant="outline" className="w-full" asChild>
-                        <Link href={stat.href}>
-                            Buka Halaman
-                            <ArrowRight className="h-4 w-4 ml-2" />
-                        </Link>
-                    </Button>
-                </CardFooter>
             </Card>
-        ))}
-      </div>
+            {quickStats.map((stat, index) => (
+                <Card key={index}>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                        <stat.icon className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stat.value}</div>
+                        <p className="text-xs text-muted-foreground">Tersedia di sistem</p>
+                    </CardContent>
+                    <CardFooter className="pt-0 pb-4">
+                        <Button size="sm" variant="outline" className="w-full" asChild>
+                            <Link href={stat.href}>
+                                Buka Halaman
+                                <ArrowRight className="h-4 w-4 ml-2" />
+                            </Link>
+                        </Button>
+                    </CardFooter>
+                </Card>
+            ))}
+        </div>
 
       <div className="grid md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
