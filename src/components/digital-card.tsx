@@ -8,11 +8,10 @@ import type { MemberData } from '@/ai/flows/get-members';
 
 interface DigitalCardProps {
   member: MemberData;
-  verificationUrl: string;
 }
 
 export const DigitalCard = forwardRef<HTMLDivElement, DigitalCardProps>(
-  ({ member, verificationUrl }, ref) => {
+  ({ member }, ref) => {
     
     const fallbackInitial = member.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
     
@@ -45,7 +44,7 @@ export const DigitalCard = forwardRef<HTMLDivElement, DigitalCardProps>(
         </div>
         <div className="bg-muted/50 p-4 flex gap-4 items-center">
             <div className="bg-white p-1 rounded-md">
-                <QRCode value={verificationUrl} size={64} />
+                <QRCode value={member.id} size={64} />
             </div>
             <div className="text-xs text-muted-foreground">
                 <p className="font-bold">ID Anggota:</p>

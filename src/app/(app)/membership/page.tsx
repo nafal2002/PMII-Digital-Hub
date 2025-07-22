@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
 import { addMember } from "@/ai/flows/add-member"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { Loader2, Download, UserPlus } from "lucide-react"
 import { MemberList } from "./member-list"
 import { MemberData } from "@/ai/flows/get-members"
@@ -61,15 +61,8 @@ export default function MembershipPage() {
     const [activeTab, setActiveTab] = useState("registration");
     const [selectedMemberForCard, setSelectedMemberForCard] = useState<MemberData | null>(null);
     const [key, setKey] = useState(Date.now()); // Key to re-render MemberList
-    const [originUrl, setOriginUrl] = useState('');
 
     const cardRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            setOriginUrl(window.location.origin);
-        }
-    }, []);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -264,7 +257,7 @@ export default function MembershipPage() {
                     <CardContent className="flex flex-col items-center justify-center gap-6">
                        {selectedMemberForCard ? (
                         <>
-                           <DigitalCard ref={cardRef} member={selectedMemberForCard} verificationUrl={`${originUrl}/verify/${selectedMemberForCard.id}`} />
+                           <DigitalCard ref={cardRef} member={selectedMemberForCard} />
 
                             <Button onClick={handleDownload} disabled={isDownloading}>
                                 {isDownloading ? (
