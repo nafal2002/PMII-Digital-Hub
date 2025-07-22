@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview A flow to add new modules to the Firestore database, including file upload.
+ * @fileOverview A flow to add new modules to the Firestore database, including file upload and Telegram verification.
  *
  * - addModule - A function that handles adding a new module.
  * - AddModuleInput - The input type for the addModule function.
@@ -14,6 +14,7 @@ import { z } from 'genkit';
 import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { uploadFileFromDataUri } from '@/lib/firebase-storage';
+import TelegramBot from 'node-telegram-bot-api';
 
 const AddModuleInputSchema = z.object({
   title: z.string().describe('Title of the module.'),
@@ -49,7 +50,6 @@ const addModuleFlow = ai.defineFlow(
     try {
       let fileUrl: string | undefined = undefined;
 
-      // If a file is provided, upload it and get the URL
       if (input.fileDataUri) {
         fileUrl = await uploadFileFromDataUri(input.fileDataUri, 'module-files');
       }
@@ -59,10 +59,32 @@ const addModuleFlow = ai.defineFlow(
         description: input.description,
         category: input.category,
         fileUrl: fileUrl,
+        status: 'pending', // Set initial status to pending
       };
 
       const docRef = await addDoc(collection(db, 'modules'), moduleData);
       console.log('Document written with ID: ', docRef.id);
+
+      // Send confirmation to Telegram
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      const chatId = process.env.TELEGRAM_CHAT_ID;
+
+      if (botToken && chatId) {
+        const bot = new TelegramBot(botToken);
+        const message = `Modul baru "${input.title}" telah diajukan untuk ditambahkan.\n\nDeskripsi: ${input.description}\nKategori: ${input.category}\n\nMohon setujui atau tolak penambahan ini.`;
+        
+        await bot.sendMessage(chatId, message, {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: '✅ Setujui', callback_data: `approve_module:${docRef.id}` },
+                { text: '❌ Tolak', callback_data: `deny_module:${docRef.id}` }
+              ]
+            ]
+          }
+        });
+      }
+
       return {
         success: true,
         moduleId: docRef.id,
