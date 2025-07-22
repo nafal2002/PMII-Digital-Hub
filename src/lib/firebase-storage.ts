@@ -7,7 +7,7 @@ const storage = getStorage(app);
 
 // Extracts the file extension and base64 data from a data URI
 function parseDataUri(dataUri: string): { mimeType: string; base64Data: string; extension: string } {
-    const-matches = dataUri.match(/^data:(.*);base64,(.*)$/);
+    const matches = dataUri.match(/^data:(.*);base64,(.*)$/);
     if (!matches || matches.length !== 3) {
         throw new Error("Invalid data URI string.");
     }
