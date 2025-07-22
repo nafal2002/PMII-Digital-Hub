@@ -17,7 +17,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Logo } from "@/components/icons"
-import { toast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
+import { addMember } from "@/ai/flows/add-member"
+import { useState } from "react"
+import { Loader2 } from "lucide-react"
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Nama lengkap harus diisi."),
@@ -29,6 +32,8 @@ const formSchema = z.object({
 })
 
 export default function MembershipPage() {
+    const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState(false);
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -41,13 +46,32 @@ export default function MembershipPage() {
         },
     })
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(values)
-        toast({
-            title: "Pendaftaran Berhasil!",
-            description: "Data Anda telah kami terima. Selamat bergabung!",
-        })
-        form.reset();
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        setIsLoading(true);
+        try {
+            const result = await addMember(values);
+            if (result.success) {
+                toast({
+                    title: "Pendaftaran Berhasil!",
+                    description: "Data Anda telah kami simpan. Selamat bergabung!",
+                });
+                form.reset();
+            } else {
+                 toast({
+                    variant: "destructive",
+                    title: "Pendaftaran Gagal!",
+                    description: "Terjadi kesalahan saat menyimpan data. Silakan coba lagi.",
+                });
+            }
+        } catch (error) {
+             toast({
+                variant: "destructive",
+                title: "Pendaftaran Gagal!",
+                description: "Terjadi kesalahan pada sistem. Silakan coba lagi nanti.",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     }
 
   return (
@@ -71,28 +95,31 @@ export default function MembershipPage() {
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                                 <FormField control={form.control} name="fullName" render={({ field }) => (
-                                    <FormItem><FormLabel>Nama Lengkap</FormLabel><FormControl><Input placeholder="Sahabat/i..." {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Nama Lengkap</FormLabel><FormControl><Input placeholder="Sahabat/i..." {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>
                                 )}/>
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <FormField control={form.control} name="nim" render={({ field }) => (
-                                        <FormItem><FormLabel>NIM</FormLabel><FormControl><Input placeholder="Nomor Induk Mahasiswa" {...field} /></FormControl><FormMessage /></FormItem>
+                                        <FormItem><FormLabel>NIM</FormLabel><FormControl><Input placeholder="Nomor Induk Mahasiswa" {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>
                                     )}/>
                                     <FormField control={form.control} name="faculty" render={({ field }) => (
-                                        <FormItem><FormLabel>Fakultas</FormLabel><FormControl><Input placeholder="Fakultas..." {...field} /></FormControl><FormMessage /></FormItem>
+                                        <FormItem><FormLabel>Fakultas</FormLabel><FormControl><Input placeholder="Fakultas..." {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>
                                     )}/>
                                 </div>
                                  <div className="grid md:grid-cols-2 gap-6">
                                     <FormField control={form.control} name="email" render={({ field }) => (
-                                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="email@contoh.com" {...field} /></FormControl><FormMessage /></FormItem>
+                                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="email@contoh.com" {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>
                                     )}/>
                                     <FormField control={form.control} name="whatsapp" render={({ field }) => (
-                                        <FormItem><FormLabel>No. WhatsApp</FormLabel><FormControl><Input placeholder="08xxxxxxxx" {...field} /></FormControl><FormMessage /></FormItem>
+                                        <FormItem><FormLabel>No. WhatsApp</FormLabel><FormControl><Input placeholder="08xxxxxxxx" {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>
                                     )}/>
                                 </div>
                                 <FormField control={form.control} name="year" render={({ field }) => (
-                                    <FormItem><FormLabel>Tahun Angkatan</FormLabel><FormControl><Input placeholder="Contoh: 2022" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem><FormLabel>Tahun Angkatan</FormLabel><FormControl><Input placeholder="Contoh: 2022" {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>
                                 )}/>
-                                <Button type="submit">Daftar</Button>
+                                <Button type="submit" disabled={isLoading}>
+                                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Daftar
+                                </Button>
                             </form>
                         </Form>
                     </CardContent>
