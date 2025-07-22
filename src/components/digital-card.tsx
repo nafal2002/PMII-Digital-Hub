@@ -19,6 +19,12 @@ export const DigitalCard = forwardRef<HTMLDivElement, DigitalCardProps>(
         ? member.photoUrl 
         : `https://api.dicebear.com/8.x/initials/svg?seed=${member.fullName}`;
 
+    const qrCodeValue = JSON.stringify({
+      id: member.id,
+      name: member.fullName,
+      whatsapp: member.whatsapp
+    });
+
     return (
       <div 
         ref={ref} 
@@ -44,7 +50,7 @@ export const DigitalCard = forwardRef<HTMLDivElement, DigitalCardProps>(
         </div>
         <div className="bg-muted/50 p-4 flex gap-4 items-center">
             <div className="bg-white p-1 rounded-md">
-                <QRCode value={member.id} size={64} />
+                <QRCode value={qrCodeValue} size={64} />
             </div>
             <div className="text-xs text-muted-foreground">
                 <p className="font-bold">ID Anggota:</p>
