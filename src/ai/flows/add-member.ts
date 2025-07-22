@@ -21,6 +21,7 @@ const AddMemberInputSchema = z.object({
   year: z.string().describe('The year the member enrolled.'),
   email: z.string().email().describe('Email address of the member.'),
   whatsapp: z.string().describe('WhatsApp number of the member.'),
+  photoUrl: z.string().optional().describe('URL of the member\'s photo.'),
 });
 export type AddMemberInput = z.infer<typeof AddMemberInputSchema>;
 

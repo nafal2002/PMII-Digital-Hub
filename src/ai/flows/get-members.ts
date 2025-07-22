@@ -22,6 +22,7 @@ const MemberDataSchema = z.object({
   year: z.string(),
   email: z.string().email(),
   whatsapp: z.string(),
+  photoUrl: z.string().optional(),
 });
 export type MemberData = z.infer<typeof MemberDataSchema>;
 

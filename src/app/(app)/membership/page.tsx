@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,6 +27,9 @@ import { MemberData } from "@/ai/flows/get-members"
 import html2canvas from "html2canvas"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
 const formSchema = z.object({
   fullName: z.string().min(2, "Nama lengkap harus diisi."),
   nim: z.string().min(5, "NIM tidak valid."),
@@ -33,7 +37,22 @@ const formSchema = z.object({
   year: z.string().length(4, "Tahun angkatan tidak valid."),
   email: z.string().email("Email tidak valid."),
   whatsapp: z.string().min(10, "Nomor WhatsApp tidak valid."),
+  photo: z.instanceof(File).optional()
+    .refine((file) => !file || file.size <= MAX_FILE_SIZE, `Ukuran foto maksimal adalah 2MB.`)
+    .refine(
+      (file) => !file || ACCEPTED_IMAGE_TYPES.includes(file.type),
+      "Hanya format .jpg, .jpeg, .png dan .webp yang didukung."
+    ),
 })
+
+function fileToDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
 
 export default function MembershipPage() {
     const { toast } = useToast();
@@ -54,13 +73,28 @@ export default function MembershipPage() {
             year: "",
             email: "",
             whatsapp: "",
+            photo: undefined,
         },
     })
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsLoading(true);
         try {
-            const result = await addMember(values);
+            let photoUrl: string | undefined = undefined;
+            if (values.photo) {
+                photoUrl = await fileToDataUrl(values.photo);
+            }
+
+            const result = await addMember({
+                fullName: values.fullName,
+                nim: values.nim,
+                faculty: values.faculty,
+                year: values.year,
+                email: values.email,
+                whatsapp: values.whatsapp,
+                photoUrl: photoUrl,
+            });
+
             if (result.success) {
                 toast({
                     title: "Pendaftaran Berhasil!",
@@ -97,6 +131,7 @@ export default function MembershipPage() {
       try {
         const canvas = await html2canvas(cardRef.current, { 
             useCORS: true, 
+            allowTaint: true,
             backgroundColor: null,
             scale: 2 
         });
@@ -118,13 +153,18 @@ export default function MembershipPage() {
         setIsDownloading(false);
       }
     };
-
+    
     const cardData = selectedMemberForCard || {
         fullName: 'SAHABAT NAMA',
         nim: '1234567890',
+        photoUrl: '',
     };
     
     const fallbackInitial = cardData.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+    
+    const avatarImageSrc = cardData.photoUrl 
+        ? cardData.photoUrl 
+        : `https://api.dicebear.com/8.x/initials/svg?seed=${cardData.fullName}`;
 
 
   return (
@@ -167,9 +207,32 @@ export default function MembershipPage() {
                                         <FormItem><FormLabel>No. WhatsApp</FormLabel><FormControl><Input placeholder="08xxxxxxxx" {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>
                                     )}/>
                                 </div>
-                                <FormField control={form.control} name="year" render={({ field }) => (
-                                    <FormItem><FormLabel>Tahun Angkatan</FormLabel><FormControl><Input placeholder="Contoh: 2022" {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>
-                                )}/>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <FormField control={form.control} name="year" render={({ field }) => (
+                                        <FormItem><FormLabel>Tahun Angkatan</FormLabel><FormControl><Input placeholder="Contoh: 2022" {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>
+                                    )}/>
+                                    <FormField
+                                        control={form.control}
+                                        name="photo"
+                                        render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Foto Diri (Opsional)</FormLabel>
+                                            <FormControl>
+                                            <Input 
+                                                type="file" 
+                                                accept="image/png, image/jpeg, image/jpg, image/webp"
+                                                onChange={(e) => field.onChange(e.target.files?.[0])} 
+                                                disabled={isLoading} 
+                                            />
+                                            </FormControl>
+                                            <FormDescription>
+                                                Ukuran maks 2MB. Format: JPG, PNG, atau WebP.
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                        )}
+                                    />
+                                </div>
                                 <Button type="submit" disabled={isLoading}>
                                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Daftar
@@ -217,7 +280,7 @@ export default function MembershipPage() {
                                 </div>
                                 <div className="flex items-center gap-4 pt-4">
                                     <Avatar className="w-20 h-20 border-4 border-white">
-                                        <AvatarImage src={`https://api.dicebear.com/8.x/initials/svg?seed=${cardData.fullName}`} data-ai-hint="person portrait" />
+                                        <AvatarImage src={avatarImageSrc} data-ai-hint="person portrait" />
                                         <AvatarFallback>{fallbackInitial}</AvatarFallback>
                                     </Avatar>
                                     <div>
