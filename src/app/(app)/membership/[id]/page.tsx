@@ -3,7 +3,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { getMemberById } from '@/ai/flows/get-member-by-id';
 import { MemberData } from '@/ai/flows/get-members';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

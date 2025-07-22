@@ -8,18 +8,19 @@ import type { MemberData } from '@/ai/flows/get-members';
 
 interface DigitalCardProps {
   member: MemberData;
+  verificationUrl?: string;
 }
 
 export const DigitalCard = forwardRef<HTMLDivElement, DigitalCardProps>(
-  ({ member }, ref) => {
+  ({ member, verificationUrl }, ref) => {
     
     const fallbackInitial = member.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
     
     const avatarImageSrc = member.photoUrl 
         ? member.photoUrl 
         : `https://api.dicebear.com/8.x/initials/svg?seed=${member.fullName}`;
-
-    const qrCodeValue = JSON.stringify({
+    
+    const qrCodeValue = verificationUrl ? verificationUrl : JSON.stringify({
       id: member.id,
       name: member.fullName,
       whatsapp: member.whatsapp
@@ -28,14 +29,14 @@ export const DigitalCard = forwardRef<HTMLDivElement, DigitalCardProps>(
     return (
       <div 
         ref={ref} 
-        className="w-full max-w-sm bg-card text-card-foreground rounded-xl shadow-lg border-4 border-green-600 overflow-hidden"
+        className="w-full max-w-sm bg-card text-card-foreground rounded-xl shadow-lg border-4 border-yellow-500 overflow-hidden"
       >
-        <div className="p-4 bg-green-600 text-primary-foreground flex justify-between items-center">
+        <div className="p-4 bg-yellow-500 text-primary-foreground flex justify-between items-center">
              <div>
-                <h3 className="font-headline text-lg font-bold">KARTU ANGGOTA</h3>
-                <p className="font-body text-xs opacity-90">Pergerakan Mahasiswa Islam Indonesia</p>
+                <h3 className="font-headline text-lg font-bold text-gray-900">KARTU ANGGOTA</h3>
+                <p className="font-body text-xs text-gray-800 opacity-90">Pergerakan Mahasiswa Islam Indonesia</p>
             </div>
-            <Logo className="w-12 h-12" />
+            <Logo className="w-12 h-12 text-gray-900" />
         </div>
         <div className="p-4 flex gap-4">
              <Avatar className="w-20 h-20 rounded-md border-4 border-white shadow-md">

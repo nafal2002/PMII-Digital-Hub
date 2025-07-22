@@ -50,7 +50,7 @@ export default function Home() {
 
   return (
     <div className="grid gap-6">
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="lg:col-span-1">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">Total Anggota</CardTitle>
@@ -86,7 +86,7 @@ export default function Home() {
             </Card>
         ))}
       </div>
-      
+
       <div className="grid md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
              <Card>
@@ -119,7 +119,7 @@ export default function Home() {
             <CardDescription>Trilogi PMII</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center text-center justify-center flex-grow">
-            <Lightbulb className="w-12 h-12 text-accent mb-4" />
+            <Lightbulb className="w-12 h-12 text-yellow-500 mb-4" />
             <blockquote className="text-lg font-semibold italic font-body">
               "Dzikir, Fikir, dan Amal Shaleh."
             </blockquote>
