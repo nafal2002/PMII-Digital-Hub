@@ -20,9 +20,11 @@ import { Logo } from "@/components/icons"
 import { useToast } from "@/hooks/use-toast"
 import { addMember } from "@/ai/flows/add-member"
 import { useState, useRef } from "react"
-import { Loader2, Download } from "lucide-react"
+import { Loader2, Download, UserPlus } from "lucide-react"
 import { MemberList } from "./member-list"
+import { MemberData } from "@/ai/flows/get-members"
 import html2canvas from "html2canvas"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 const formSchema = z.object({
   fullName: z.string().min(2, "Nama lengkap harus diisi."),
@@ -37,6 +39,10 @@ export default function MembershipPage() {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [activeTab, setActiveTab] = useState("registration");
+    const [selectedMemberForCard, setSelectedMemberForCard] = useState<MemberData | null>(null);
+    const [key, setKey] = useState(Date.now()); // Key to re-render MemberList
+
     const cardRef = useRef<HTMLDivElement>(null);
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -61,6 +67,7 @@ export default function MembershipPage() {
                     description: "Data Anda telah kami simpan. Selamat bergabung!",
                 });
                 form.reset();
+                setKey(Date.now()); // Trigger re-fetch in MemberList
             } else {
                  toast({
                     variant: "destructive",
@@ -79,6 +86,11 @@ export default function MembershipPage() {
         }
     }
 
+    const handleSelectMemberForCard = (member: MemberData) => {
+        setSelectedMemberForCard(member);
+        setActiveTab("card");
+    };
+
     const handleDownload = async () => {
       if (!cardRef.current) return;
       setIsDownloading(true);
@@ -89,7 +101,10 @@ export default function MembershipPage() {
             scale: 2 
         });
         const link = document.createElement('a');
-        link.download = 'kartu-anggota-pmii.png';
+        const fileName = selectedMemberForCard 
+          ? `kartu-anggota-${selectedMemberForCard.fullName.toLowerCase().replace(/ /g, '-')}.png`
+          : 'kartu-anggota-pmii.png';
+        link.download = fileName;
         link.href = canvas.toDataURL('image/png');
         link.click();
       } catch (error) {
@@ -104,6 +119,13 @@ export default function MembershipPage() {
       }
     };
 
+    const cardData = selectedMemberForCard || {
+        fullName: 'SAHABAT NAMA',
+        nim: '1234567890',
+    };
+    
+    const fallbackInitial = cardData.fullName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+
 
   return (
     <div className="space-y-8">
@@ -111,7 +133,7 @@ export default function MembershipPage() {
             <h1 className="text-3xl font-bold font-headline">Data Keanggotaan</h1>
             <p className="text-muted-foreground">Formulir pendaftaran, daftar anggota, dan kartu anggota digital.</p>
         </div>
-        <Tabs defaultValue="registration">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="registration">Pendaftaran</TabsTrigger>
                 <TabsTrigger value="list">Daftar Anggota</TabsTrigger>
@@ -161,10 +183,10 @@ export default function MembershipPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="font-headline">Daftar Anggota Terdaftar</CardTitle>
-                        <CardDescription>Berikut adalah daftar anggota yang telah bergabung.</CardDescription>
+                        <CardDescription>Berikut adalah daftar anggota yang telah bergabung. Pilih anggota untuk membuat kartu digital.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <MemberList />
+                        <MemberList key={key} onSelectMember={handleSelectMemberForCard} />
                     </CardContent>
                 </Card>
             </TabsContent>
@@ -172,42 +194,62 @@ export default function MembershipPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="font-headline">Kartu Anggota Digital</CardTitle>
-                        <CardDescription>Pratinjau kartu tanda anggota PMII. Klik tombol di bawah untuk mengunduh.</CardDescription>
+                         {selectedMemberForCard ? (
+                            <CardDescription>
+                                Pratinjau kartu untuk <span className="font-semibold">{selectedMemberForCard.fullName}</span>. Klik tombol di bawah untuk mengunduh.
+                            </CardDescription>
+                        ) : (
+                             <CardDescription>
+                                Pilih seorang anggota dari tab "Daftar Anggota" untuk membuat kartu mereka.
+                            </CardDescription>
+                        )}
                     </CardHeader>
                     <CardContent className="flex flex-col items-center justify-center gap-6">
-                        <div ref={cardRef} className="w-full max-w-md bg-gradient-to-br from-primary via-green-500 to-green-600 text-primary-foreground rounded-xl p-6 shadow-lg space-y-4">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="font-headline text-xl">KARTU ANGGOTA</h3>
-                                    <p className="font-body text-sm opacity-90">Pergerakan Mahasiswa Islam Indonesia</p>
+                       {selectedMemberForCard ? (
+                        <>
+                            <div ref={cardRef} className="w-full max-w-md bg-gradient-to-br from-primary via-green-500 to-green-600 text-primary-foreground rounded-xl p-6 shadow-lg space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="font-headline text-xl">KARTU ANGGOTA</h3>
+                                        <p className="font-body text-sm opacity-90">Pergerakan Mahasiswa Islam Indonesia</p>
+                                    </div>
+                                    <Logo className="w-12 h-12" />
                                 </div>
-                                <Logo className="w-12 h-12" />
-                            </div>
-                            <div className="flex items-center gap-4 pt-4">
-                                <Avatar className="w-20 h-20 border-4 border-white">
-                                    <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="person portrait" />
-                                    <AvatarFallback>SN</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-body text-xs">Nama</p>
-                                    <h4 className="font-headline text-lg">SAHABAT NAMA</h4>
-                                    <p className="font-body text-xs mt-1">NIM</p>
-                                    <p className="font-body font-semibold">1234567890</p>
+                                <div className="flex items-center gap-4 pt-4">
+                                    <Avatar className="w-20 h-20 border-4 border-white">
+                                        <AvatarImage src={`https://api.dicebear.com/8.x/initials/svg?seed=${cardData.fullName}`} data-ai-hint="person portrait" />
+                                        <AvatarFallback>{fallbackInitial}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="font-body text-xs">Nama</p>
+                                        <h4 className="font-headline text-lg">{cardData.fullName.toUpperCase()}</h4>
+                                        <p className="font-body text-xs mt-1">NIM</p>
+                                        <p className="font-body font-semibold">{cardData.nim}</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-body text-xs">Ketua Cabang</p>
+                                    <p className="font-headline mt-2">.....................</p>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <p className="font-body text-xs">Ketua Cabang</p>
-                                <p className="font-headline mt-2">.....................</p>
-                            </div>
-                        </div>
-                        <Button onClick={handleDownload} disabled={isDownloading}>
-                            {isDownloading ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <Download className="mr-2 h-4 w-4" />
-                            )}
-                            Unduh Kartu
-                        </Button>
+                            <Button onClick={handleDownload} disabled={isDownloading}>
+                                {isDownloading ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Download className="mr-2 h-4 w-4" />
+                                )}
+                                Unduh Kartu
+                            </Button>
+                        </>
+                       ) : (
+                        <Alert>
+                            <UserPlus className="h-4 w-4" />
+                            <AlertTitle>Pilih Anggota</AlertTitle>
+                            <AlertDescription>
+                                Silakan kembali ke tab "Daftar Anggota" dan pilih salah satu anggota untuk dibuatkan kartu.
+                            </AlertDescription>
+                        </Alert>
+                       )}
                     </CardContent>
                 </Card>
             </TabsContent>

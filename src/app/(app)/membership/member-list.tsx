@@ -13,9 +13,14 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Frown, Users } from 'lucide-react';
+import { Frown, Users, CreditCard } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export function MemberList() {
+interface MemberListProps {
+    onSelectMember: (member: MemberData) => void;
+}
+
+export function MemberList({ onSelectMember }: MemberListProps) {
   const [members, setMembers] = useState<MemberData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -26,7 +31,9 @@ export function MemberList() {
         setIsLoading(true);
         setError('');
         const result = await getMembers();
-        setMembers(result.members);
+        // Sort members by fullName alphabetically
+        const sortedMembers = result.members.sort((a, b) => a.fullName.localeCompare(b.fullName));
+        setMembers(sortedMembers);
       } catch (err) {
         setError('Gagal memuat data anggota. Silakan coba lagi nanti.');
         console.error(err);
@@ -76,20 +83,25 @@ export function MemberList() {
             <TableHeader>
                 <TableRow>
                 <TableHead>Nama Lengkap</TableHead>
-                <TableHead>NIM</TableHead>
-                <TableHead className="hidden md:table-cell">Fakultas</TableHead>
-                <TableHead className="hidden lg:table-cell">Email</TableHead>
+                <TableHead className="hidden md:table-cell">NIM</TableHead>
+                <TableHead className="hidden lg:table-cell">Fakultas</TableHead>
                 <TableHead>Angkatan</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {members.map((member) => (
                 <TableRow key={member.id}>
                     <TableCell className="font-medium">{member.fullName}</TableCell>
-                    <TableCell>{member.nim}</TableCell>
-                    <TableCell className="hidden md:table-cell">{member.faculty}</TableCell>
-                    <TableCell className="hidden lg:table-cell">{member.email}</TableCell>
+                    <TableCell className="hidden md:table-cell">{member.nim}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{member.faculty}</TableCell>
                     <TableCell>{member.year}</TableCell>
+                    <TableCell className="text-right">
+                        <Button variant="outline" size="sm" onClick={() => onSelectMember(member)}>
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Buat Kartu
+                        </Button>
+                    </TableCell>
                 </TableRow>
                 ))}
             </TableBody>
