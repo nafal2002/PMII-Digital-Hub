@@ -14,6 +14,7 @@ import { z } from 'genkit';
 import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { uploadFileFromDataUri } from '@/lib/firebase-storage';
+import { sendTelegramNotification } from './send-telegram-notification';
 
 const AddModuleInputSchema = z.object({
   title: z.string().describe('Title of the module.'),
@@ -57,6 +58,16 @@ const addModuleFlow = ai.defineFlow(
 
       const docRef = await addDoc(collection(db, 'modules'), moduleData);
       console.log('Document written with ID: ', docRef.id);
+
+      // Send notification, but don't block the response if it fails
+      try {
+        const message = `*Modul Baru Ditambahkan!*\n\n*Judul:* ${input.title}\n*Kategori:* ${input.category}\n\nModul baru telah berhasil ditambahkan ke sistem.`;
+        await sendTelegramNotification({ text: message });
+      } catch (notificationError) {
+        console.error("Failed to send Telegram notification:", notificationError);
+        // Do not return an error to the user, as the main operation was successful.
+      }
+
 
       return {
         success: true,

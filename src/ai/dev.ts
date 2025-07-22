@@ -9,3 +9,4 @@ import '@/ai/flows/add-module.ts';
 import '@/ai/flows/update-module.ts';
 import '@/ai/flows/delete-module.ts';
 import '@/ai/flows/get-member-by-id.ts';
+import '@/ai/flows/send-telegram-notification.ts';
