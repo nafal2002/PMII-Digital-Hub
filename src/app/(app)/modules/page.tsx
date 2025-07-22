@@ -59,7 +59,7 @@ const addFormSchema = z.object({
   category: z.string().min(3, "Kategori harus diisi."),
   description: z.string().min(10, "Deskripsi harus lebih dari 10 karakter."),
   file: fileSchema,
-  uploadCode: z.string().refine(val => val === 'pmii2025', { message: "Kode sandi tidak valid."})
+  uploadCode: z.string().min(1, "Kode sandi harus diisi.")
 })
 
 const editFormSchema = z.object({
@@ -67,7 +67,7 @@ const editFormSchema = z.object({
   category: z.string().min(3, "Kategori harus diisi."),
   description: z.string().min(10, "Deskripsi harus lebih dari 10 karakter."),
   file: fileSchema,
-  uploadCode: z.string().refine(val => val === 'pmii2025', { message: "Kode sandi tidak valid."})
+  uploadCode: z.string().min(1, "Kode sandi harus diisi.")
 });
 
 type EditFormValues = z.infer<typeof editFormSchema>;
@@ -223,15 +223,14 @@ function ModuleList({ onModuleChange }: { onModuleChange: () => void }) {
   const handleDeleteConfirm = async () => {
     if (!selectedModule) return;
     try {
-      // If there's a file, delete it from storage first
       if (selectedModule.fileUrl) {
           await deleteFileFromUrl(selectedModule.fileUrl);
       }
       const result = await deleteModule({ id: selectedModule.id });
       if (result.success) {
         toast({ title: "Modul Dihapus", description: "Modul telah berhasil dihapus." });
-        onModuleChange(); // This will trigger a re-fetch in the parent component
-        fetchModules(); // also refetch here
+        onModuleChange(); 
+        fetchModules(); 
       } else {
         toast({ variant: "destructive", title: "Gagal Menghapus", description: "Tidak dapat menghapus modul." });
       }
@@ -322,7 +321,6 @@ function ModuleList({ onModuleChange }: { onModuleChange: () => void }) {
         ))}
       </div>
 
-       {/* Edit Dialog */}
       {selectedModule && (
         <EditModuleDialog
           module={selectedModule}
@@ -336,7 +334,6 @@ function ModuleList({ onModuleChange }: { onModuleChange: () => void }) {
         />
       )}
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -401,7 +398,7 @@ export default function ModulesPage() {
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
-            setListKey(Date.now()); // Trigger re-fetch in ModuleList
+            setListKey(Date.now());
             setActiveTab("list");
         } else {
              toast({

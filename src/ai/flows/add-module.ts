@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview A flow to add new modules to the Firestore database, including file upload and Telegram verification.
+ * @fileOverview A flow to add new modules to the Firestore database.
  *
  * - addModule - A function that handles adding a new module.
  * - AddModuleInput - The input type for the addModule function.
@@ -14,7 +14,6 @@ import { z } from 'genkit';
 import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { uploadFileFromDataUri } from '@/lib/firebase-storage';
-import TelegramBot from 'node-telegram-bot-api';
 
 const AddModuleInputSchema = z.object({
   title: z.string().describe('Title of the module.'),
@@ -59,31 +58,11 @@ const addModuleFlow = ai.defineFlow(
         description: input.description,
         category: input.category,
         fileUrl: fileUrl,
-        status: 'pending', // Set initial status to pending
+        status: 'approved', // Directly approve the module
       };
 
       const docRef = await addDoc(collection(db, 'modules'), moduleData);
       console.log('Document written with ID: ', docRef.id);
-
-      const botToken = process.env.TELEGRAM_BOT_TOKEN;
-      const chatId = process.env.TELEGRAM_CHAT_ID;
-
-      if (botToken && chatId) {
-        const bot = new TelegramBot(botToken);
-        const message = `Modul baru "${input.title}" telah diajukan untuk ditambahkan dan menunggu persetujuan Anda.\n\n*Deskripsi:* ${input.description}\n*Kategori:* ${input.category}\n\nSilakan verifikasi penambahan ini.`;
-        
-        await bot.sendMessage(chatId, message, {
-          parse_mode: 'Markdown',
-          reply_markup: {
-            inline_keyboard: [
-              [
-                { text: '✅ Setujui', callback_data: `approve_module:${docRef.id}` },
-                { text: '❌ Tolak', callback_data: `deny_module:${docRef.id}` }
-              ]
-            ]
-          }
-        });
-      }
 
       return {
         success: true,

@@ -12,7 +12,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 
 const ModuleDataSchema = z.object({
   id: z.string(),
@@ -41,8 +41,7 @@ const getModulesFlow = ai.defineFlow(
   },
   async () => {
     try {
-      // Only fetch modules that have been approved
-      const modulesCol = query(collection(db, 'modules'), where('status', '==', 'approved'), orderBy('title'));
+      const modulesCol = query(collection(db, 'modules'), orderBy('title'));
       const moduleSnapshot = await getDocs(modulesCol);
       const modulesList = moduleSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ModuleData));
       return {

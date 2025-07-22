@@ -52,13 +52,10 @@ const updateModuleFlow = ai.defineFlow(
       const moduleRef = doc(db, 'modules', id);
       const dataToUpdate: { [key: string]: any } = { title, description, category };
       
-      // If a new file is uploaded
       if (fileDataUri) {
-        // Delete the old file if it exists
         if (currentFileUrl) {
            await deleteFileFromUrl(currentFileUrl);
         }
-        // Upload the new file and get its URL
         dataToUpdate.fileUrl = await uploadFileFromDataUri(fileDataUri, 'module-files');
       }
 
