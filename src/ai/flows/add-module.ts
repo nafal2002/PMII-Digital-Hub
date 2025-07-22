@@ -65,15 +65,15 @@ const addModuleFlow = ai.defineFlow(
       const docRef = await addDoc(collection(db, 'modules'), moduleData);
       console.log('Document written with ID: ', docRef.id);
 
-      // Send confirmation to Telegram
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
       const chatId = process.env.TELEGRAM_CHAT_ID;
 
       if (botToken && chatId) {
         const bot = new TelegramBot(botToken);
-        const message = `Modul baru "${input.title}" telah diajukan untuk ditambahkan.\n\nDeskripsi: ${input.description}\nKategori: ${input.category}\n\nMohon setujui atau tolak penambahan ini.`;
+        const message = `Modul baru "${input.title}" telah diajukan untuk ditambahkan dan menunggu persetujuan Anda.\n\n*Deskripsi:* ${input.description}\n*Kategori:* ${input.category}\n\nSilakan verifikasi penambahan ini.`;
         
         await bot.sendMessage(chatId, message, {
+          parse_mode: 'Markdown',
           reply_markup: {
             inline_keyboard: [
               [
@@ -90,7 +90,7 @@ const addModuleFlow = ai.defineFlow(
         moduleId: docRef.id,
       };
     } catch (error) {
-      console.error('Error adding document: ', error);
+      console.error('Error in addModuleFlow: ', error);
       return {
         success: false,
         error: 'Terjadi kesalahan saat menambahkan modul.',

@@ -16,7 +16,7 @@ if (!botToken || !chatId) {
 
 const bot = new TelegramBot(botToken, { polling: true });
 
-console.log('Bot listener started...');
+console.log('Bot listener started and is actively listening for commands...');
 
 bot.on('callback_query', async (callbackQuery) => {
   const msg = callbackQuery.message;
@@ -45,9 +45,10 @@ bot.on('callback_query', async (callbackQuery) => {
   try {
     const docSnap = await getDoc(moduleRef);
     if (!docSnap.exists()) {
-        await bot.editMessageText(`Aksi gagal: Modul tidak ditemukan lagi. Mungkin sudah dihapus.`, {
+        await bot.editMessageText(`Aksi gagal: Modul tidak ditemukan lagi. Mungkin sudah dihapus atau dibatalkan.`, {
           chat_id: msg.chat.id,
           message_id: msg.message_id,
+          reply_markup: undefined,
         });
         return;
     }
@@ -63,9 +64,11 @@ bot.on('callback_query', async (callbackQuery) => {
         reply_markup: undefined,
       });
     } else if (action === 'deny_module') {
+      // We are deleting the document, so no need to check for file and delete, it will be an orphaned file.
+      // This can be improved with a cleanup cloud function in the future.
       await deleteDoc(moduleRef);
       console.log(`Module ${moduleId} denied and deleted.`);
-      await bot.editMessageText(`❌ Pengajuan modul "${moduleTitle}" telah ditolak dan dihapus.`, {
+      await bot.editMessageText(`❌ Pengajuan modul "${moduleTitle}" telah ditolak dan datanya dihapus.`, {
         chat_id: msg.chat.id,
         message_id: msg.message_id,
         reply_markup: undefined,
@@ -81,17 +84,13 @@ bot.on('callback_query', async (callbackQuery) => {
 });
 
 // Graceful shutdown
-process.on('SIGINT', () => {
+const stopBot = () => {
     console.log("Stopping bot listener...");
     bot.stopPolling().then(() => {
         console.log("Bot polling stopped.");
         process.exit(0);
     });
-});
-process.on('SIGTERM', () => {
-    console.log("Stopping bot listener...");
-    bot.stopPolling().then(() => {
-        console.log("Bot polling stopped.");
-        process.exit(0);
-    });
-});
+};
+
+process.on('SIGINT', stopBot);
+process.on('SIGTERM', stopBot);
