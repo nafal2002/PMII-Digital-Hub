@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { getMembers } from "@/ai/flows/get-members";
 
 const quickStats = [
-  { title: "Kaderisasi", value: "3 Modul", icon: BookOpen, href: "/modules" },
+  { title: "Kaderisasi", value: "11 Modul", icon: BookOpen, href: "/modules" },
   { title: "Kegiatan", value: "1 Agenda", icon: Calendar, href: "/events" },
   { title: "Arsip", value: "6 Dokumen", icon: FileArchive, href: "/archive" },
 ];
