@@ -322,7 +322,7 @@ export default function MembershipPage() {
                             <AlertTitle>Pilih Anggota</AlertTitle>
                             <AlertDescription>
                                 Silakan kembali ke tab "Daftar Anggota", pilih anggota untuk dilihat profilnya, lalu buat kartu dari sana.
-                            </Aler tDescription>
+                            </AlertDescription>
                         </Alert>
                        )}
                     </CardContent>
@@ -332,5 +332,3 @@ export default function MembershipPage() {
     </div>
   )
 }
-
-    
