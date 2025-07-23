@@ -30,8 +30,7 @@ export default function ChatbotPopup() {
     if (input.trim() === '') return;
 
     const userMessage: Message = { role: 'user', content: input };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    setMessages(prev => [...prev, userMessage]);
     const userInput = input;
     setInput('');
     setIsLoading(true);
@@ -39,9 +38,17 @@ export default function ChatbotPopup() {
     try {
         setMessages(prev => [...prev, { role: 'model', content: '' }]);
 
-        const stream = await chat(newMessages, userInput);
+        const stream = await chat(messages, userInput);
         
-        for await (const chunk of stream) {
+        const reader = stream.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            
             setMessages(prev => {
                 const lastMessage = prev[prev.length - 1];
                 if (lastMessage && lastMessage.role === 'model') {
@@ -49,7 +56,6 @@ export default function ChatbotPopup() {
                     updatedMessages.push({ role: 'model', content: lastMessage.content + chunk });
                     return updatedMessages;
                 }
-                // Should not happen, but as a fallback
                 return [...prev, { role: 'model', content: chunk }];
             });
         }
@@ -124,7 +130,7 @@ export default function ChatbotPopup() {
                     )}
                     <div
                       className={cn(
-                        'rounded-lg px-4 py-2 max-w-xs break-words',
+                        'rounded-lg px-4 py-2 max-w-xs break-words whitespace-pre-wrap',
                         message.role === 'user'
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted'
@@ -134,7 +140,7 @@ export default function ChatbotPopup() {
                     </div>
                   </div>
                 ))}
-                {isLoading && messages[messages.length - 1]?.role !== 'model' && (
+                {isLoading && messages[messages.length - 1]?.role === 'user' && (
                    <div className="flex gap-2 items-start justify-start">
                      <div className="p-2 bg-primary text-primary-foreground rounded-full">
                        <Bot className="w-5 h-5" />

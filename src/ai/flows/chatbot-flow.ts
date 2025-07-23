@@ -47,7 +47,6 @@ When using tool output, present the information in a clear and easy-to-read form
 Do not just repeat the tool output. Your response should be a complete sentence and add context.
 `;
 
-
 export async function chat(history: Message[], prompt: string): Promise<ReadableStream<string>> {
     const { stream } = ai.generateStream({
       model: 'googleai/gemini-2.0-flash',
