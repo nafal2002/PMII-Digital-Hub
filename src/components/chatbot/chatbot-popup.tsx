@@ -45,45 +45,43 @@ export default function ChatbotPopup() {
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
 
-    // This history is only for the server action call, not stored in state
-    const genkitHistory: Message[] = newMessages.map(m => ({ role: m.role, content: [{text: m.content}] }));
+    const genkitHistory: Message[] = newMessages
+        .filter(m => m.content.trim() !== '') // Filter out empty messages
+        .map(m => ({ role: m.role, content: [{text: m.content}] }));
+
     const currentInput = input;
     
     setInput('');
     setIsLoading(true);
 
     try {
-        setMessages(prev => [...prev, { role: 'model', content: '' }]);
         const stream = await chat(genkitHistory, currentInput);
         
+        let isFirstChunk = true;
         let modelResponse = '';
+
         for await (const chunk of stream) {
             modelResponse += chunk;
-             setMessages(prev => {
-                const lastMessageIndex = prev.length - 1;
-                const updatedMessages = [...prev];
-                if (updatedMessages[lastMessageIndex]?.role === 'model') {
-                    updatedMessages[lastMessageIndex] = {
-                        ...updatedMessages[lastMessageIndex],
-                        content: modelResponse,
-                    };
-                }
-                return updatedMessages;
-            });
+            if (isFirstChunk) {
+                setMessages(prev => [...prev, { role: 'model', content: modelResponse }]);
+                isFirstChunk = false;
+            } else {
+                 setMessages(prev => {
+                    const lastMessageIndex = prev.length - 1;
+                    const updatedMessages = [...prev];
+                    if (updatedMessages[lastMessageIndex]?.role === 'model') {
+                        updatedMessages[lastMessageIndex] = { ...updatedMessages[lastMessageIndex], content: modelResponse };
+                    }
+                    return updatedMessages;
+                });
+            }
         }
     } catch (error) {
         console.error("Error fetching chatbot response:", error);
-         setMessages(prev => {
-            const lastMessageIndex = prev.length - 1;
-            const updatedMessages = [...prev];
-            if (updatedMessages[lastMessageIndex]?.role === 'model') {
-                updatedMessages[lastMessageIndex] = {
-                    ...updatedMessages[lastMessageIndex],
-                    content: "Maaf, terjadi kesalahan. Coba lagi nanti.",
-                };
-            }
-            return updatedMessages;
-        });
+         setMessages(prev => [
+            ...prev,
+            { role: 'model', content: "Maaf, terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi." }
+        ]);
     } finally {
         setIsLoading(false);
     }
@@ -157,6 +155,16 @@ export default function ChatbotPopup() {
                     </div>
                   </div>
                 ))}
+                 {isLoading && messages[messages.length - 1]?.role === 'user' && (
+                    <div className="flex gap-2 items-start justify-start">
+                        <div className="p-2 bg-primary text-primary-foreground rounded-full">
+                            <Bot className="w-5 h-5" />
+                        </div>
+                        <div className="rounded-lg px-4 py-2 max-w-xs bg-muted">
+                            <Loader2 className="w-5 h-5 animate-spin"/>
+                        </div>
+                    </div>
+                )}
               </div>
             </ScrollArea>
           </CardContent>
