@@ -7,11 +7,11 @@
  */
 
 import type { Message } from 'genkit';
+import { getMembers } from './get-members';
 
 const qaMap: { [key: string]: string } = {
   'halo': 'Assalamualaikum! Ada yang bisa saya bantu terkait PMII?',
   'hai': 'Assalamualaikum! Ada yang bisa saya bantu terkait PMII?',
-  'berapa jumlah anggota': 'Saat ini, PMII Digital Hub memiliki 12 anggota terdaftar. Anda bisa melihat daftarnya di halaman Keanggotaan.',
   'ada kegiatan apa': 'Kegiatan terdekat adalah Pelatihan Kader Dasar (PKD) 2024. Informasi lebih lanjut bisa dilihat di halaman Kegiatan.',
   'modul apa saja': 'Ada banyak modul kaderisasi yang tersedia, seperti modul NDP, AD/ART, Manajemen Aksi, dan materi KOPRI. Semuanya bisa diunduh di halaman Kaderisasi.',
   'dokumen di arsip': 'Halaman Arsip berisi dokumen penting seperti AD/ART, Notulensi Rapat, LPJ Kegiatan, dan SK Pengurus. Silakan kunjungi halaman Arsip untuk mengunduhnya.',
@@ -25,14 +25,28 @@ const qaMap: { [key: string]: string } = {
   'terima kasih': 'Sama-sama! Senang bisa membantu.',
 };
 
-function getAnswer(question: string): string {
-  const lowerCaseQuestion = question.toLowerCase();
+async function getDynamicAnswer(question: string): Promise<string | null> {
+    if (question.includes('berapa jumlah anggota')) {
+        try {
+            const { members } = await getMembers();
+            const memberCount = members.length;
+            return `Saat ini, PMII Digital Hub memiliki ${memberCount} anggota terdaftar. Anda bisa melihat daftarnya di halaman Keanggotaan.`;
+        } catch (error) {
+            console.error('Error fetching member count:', error);
+            return 'Maaf, saya tidak dapat mengambil data jumlah anggota saat ini.';
+        }
+    }
+    return null;
+}
+
+
+function getStaticAnswer(question: string): string | null {
   for (const key in qaMap) {
-    if (lowerCaseQuestion.includes(key)) {
+    if (question.includes(key)) {
       return qaMap[key];
     }
   }
-  return 'Maaf, saya belum mengerti pertanyaan itu. Silakan coba pertanyaan lain yang lebih sederhana.';
+  return null;
 }
 
 
@@ -40,8 +54,19 @@ export async function chat(history: Message[]): Promise<string> {
   const lastUserMessage = history.findLast(m => m.role === 'user');
   
   if (lastUserMessage && lastUserMessage.content[0]?.text) {
-    const userText = lastUserMessage.content[0].text;
-    return getAnswer(userText);
+    const userText = lastUserMessage.content[0].text.toLowerCase();
+
+    const dynamicAnswer = await getDynamicAnswer(userText);
+    if (dynamicAnswer) {
+        return dynamicAnswer;
+    }
+
+    const staticAnswer = getStaticAnswer(userText);
+    if (staticAnswer) {
+        return staticAnswer;
+    }
+
+    return 'Maaf, saya belum mengerti pertanyaan itu. Silakan coba pertanyaan lain yang lebih sederhana.';
   }
 
   return 'Maaf, terjadi kesalahan. Silakan coba lagi.';
