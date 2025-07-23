@@ -12,7 +12,6 @@ import { getEvents } from './get-events';
 import { getModules } from './get-modules';
 import type { Message } from 'genkit';
 
-// Define tools that the chatbot can use to answer questions
 const getEventsTool = ai.defineTool(
   {
     name: 'getEvents',
@@ -48,6 +47,7 @@ When using tool output, present the information in a clear and easy-to-read form
 Do not just repeat the tool output. Your response should be a complete sentence and add context.
 `;
 
+
 export async function chat(history: Message[], prompt: string): Promise<ReadableStream<string>> {
     const { stream } = ai.generateStream({
       model: 'googleai/gemini-2.0-flash',
@@ -57,7 +57,7 @@ export async function chat(history: Message[], prompt: string): Promise<Readable
       system: chatbotSystemPrompt,
     });
 
-    return new ReadableStream({
+    const outputStream = new ReadableStream({
         async start(controller) {
             for await (const chunk of stream) {
                 if (chunk.output) {
@@ -67,4 +67,6 @@ export async function chat(history: Message[], prompt: string): Promise<Readable
             controller.close();
         }
     });
+
+    return outputStream;
 }

@@ -8,10 +8,10 @@
  * - GetModulesOutput - The return type for the getModules function.
  */
 
+import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { ai } from '@/ai/genkit';
 
 const ModuleDataSchema = z.object({
   id: z.string(),
@@ -29,17 +29,27 @@ const GetModulesOutputSchema = z.object({
 export type GetModulesOutput = z.infer<typeof GetModulesOutputSchema>;
 
 export async function getModules(): Promise<GetModulesOutput> {
-  try {
-    const modulesCol = query(collection(db, 'modules'), orderBy('title'));
-    const moduleSnapshot = await getDocs(modulesCol);
-    const modulesList = moduleSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ModuleData));
-    return {
-      modules: modulesList,
-    };
-  } catch (error) {
-    console.error('Error getting documents: ', error);
-    return {
-      modules: [],
-    };
-  }
+  return getModulesFlow();
 }
+
+const getModulesFlow = ai.defineFlow(
+  {
+    name: 'getModulesFlow',
+    outputSchema: GetModulesOutputSchema,
+  },
+  async () => {
+    try {
+      const modulesCol = query(collection(db, 'modules'), orderBy('title'));
+      const moduleSnapshot = await getDocs(modulesCol);
+      const modulesList = moduleSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ModuleData));
+      return {
+        modules: modulesList,
+      };
+    } catch (error) {
+      console.error('Error getting documents: ', error);
+      return {
+        modules: [],
+      };
+    }
+  }
+);
