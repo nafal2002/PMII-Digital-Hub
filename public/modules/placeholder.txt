@@ -1,5 +1,7 @@
-Anda dapat menempatkan file-file PDF modul Anda di dalam folder ini.
+Letakkan file-file PDF modul Anda di sini.
+Contoh: `pmii-dasar.pdf`
 
-Setelah menempatkan file (misalnya: 'modul-pkd.pdf'), Anda perlu menambahkan entrinya secara manual di Firestore Database pada koleksi 'modules'. Pastikan field 'fileUrl' diisi dengan path lokal, contoh: '/modules/modul-pkd.pdf'.
+Setelah itu, buka `src/app/(app)/modules/page.tsx` dan tambahkan entri baru
+di dalam array `localModules` agar modul baru Anda muncul di aplikasi.
 
-File ini bisa dihapus dengan aman.
+File ini bisa Anda hapus.

@@ -1,64 +1,43 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpenCheck, Download, Video, Frown, BookDashed } from "lucide-react";
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { getModules, ModuleData } from '@/ai/flows/get-modules';
+import { BookOpenCheck, Download, Video, BookDashed } from "lucide-react";
+import type { ModuleData } from '@/ai/flows/get-modules';
+
+// --- DATA MODUL LOKAL ---
+// Untuk menambah modul baru:
+// 1. Letakkan file PDF di folder `public/modules/`.
+// 2. Tambahkan entri baru di array `localModules` di bawah ini.
+//    - `id` bisa diisi dengan nomor urut atau judul singkat.
+//    - `fileUrl` harus diawali dengan `/modules/` diikuti nama file PDF Anda.
+const localModules: ModuleData[] = [
+  {
+    id: "1",
+    title: "Nilai Dasar Pergerakan (NDP)",
+    description: "Penjelasan mendalam mengenai landasan ideologis dan filosofis PMII sebagai pedoman pergerakan.",
+    category: "Ideologi",
+    fileUrl: "/modules/contoh-modul-1.pdf", // Ganti dengan nama file Anda
+  },
+  {
+    id: "2",
+    title: "Anggaran Dasar & Rumah Tangga (AD/ART)",
+    description: "Dokumen konstitusional yang mengatur seluruh aspek organisasi, keanggotaan, dan hierarki PMII.",
+    category: "Konstitusi",
+    fileUrl: "/modules/contoh-modul-2.pdf", // Ganti dengan nama file Anda
+  },
+  {
+    id: "3",
+    title: "Manajemen Aksi & Advokasi",
+    description: "Panduan praktis untuk merancang, mengorganisir, dan melaksanakan aksi serta advokasi kebijakan.",
+    category: "Praktis",
+    fileUrl: "", // Biarkan kosong jika file belum ada, tombol unduh akan nonaktif
+  },
+];
+// -------------------------
 
 function ModuleList() {
-  const [modules, setModules] = useState<ModuleData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    fetchModules();
-  }, []);
-
-  const fetchModules = async () => {
-    try {
-      setIsLoading(true);
-      setError('');
-      const result = await getModules();
-      setModules(result.modules);
-    } catch (err) {
-      setError('Gagal memuat data modul. Silakan coba lagi nanti.');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <Frown className="h-4 w-4" />
-        <AlertTitle>Terjadi Kesalahan</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
-    );
-  }
+  const modules = localModules;
 
   if (modules.length === 0) {
     return (
@@ -66,7 +45,7 @@ function ModuleList() {
         <BookDashed className="h-4 w-4" />
         <AlertTitle>Belum Ada Modul</AlertTitle>
         <AlertDescription>
-          Saat ini belum ada modul kaderisasi yang ditambahkan. Silakan tambahkan secara manual melalui database.
+          Saat ini belum ada modul kaderisasi yang ditambahkan. Silakan tambahkan secara manual di dalam kode.
         </AlertDescription>
       </Alert>
     );
@@ -109,7 +88,7 @@ export default function ModulesPage() {
       <Card>
           <CardHeader>
               <CardTitle className="font-headline flex items-center"><BookOpenCheck className="mr-3 text-primary"/>Modul Kaderisasi</CardTitle>
-              <CardDescription>Kumpulan modul untuk mendukung proses kaderisasi yang ditambahkan secara manual.</CardDescription>
+              <CardDescription>Kumpulan modul untuk mendukung proses kaderisasi yang dikelola secara lokal.</CardDescription>
           </CardHeader>
           <CardContent>
               <ModuleList />
