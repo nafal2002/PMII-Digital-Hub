@@ -8,6 +8,7 @@
 
 import type { Message } from 'genkit';
 import { getMembers } from './get-members';
+import { getModules } from './get-modules';
 
 const qaMap: { [key: string]: string } = {
   'halo': 'Assalamualaikum! Ada yang bisa saya bantu terkait PMII?',
@@ -34,6 +35,15 @@ async function getDynamicAnswer(question: string): Promise<string | null> {
         } catch (error) {
             console.error('Error fetching member count:', error);
             return 'Maaf, saya tidak dapat mengambil data jumlah anggota saat ini.';
+        }
+    } else if (question.includes('jumlah modul') || question.includes('ada berapa modul')) {
+        try {
+            const { modules } = await getModules();
+            const moduleCount = modules.length;
+            return `Terdapat ${moduleCount} modul yang tersedia di halaman Kaderisasi.`;
+        } catch (error) {
+            console.error('Error fetching module count:', error);
+            return 'Maaf, saya tidak dapat mengambil data jumlah modul saat ini.';
         }
     }
     return null;
