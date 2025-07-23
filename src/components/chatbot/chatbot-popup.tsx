@@ -48,31 +48,13 @@ export default function ChatbotPopup() {
     setIsLoading(true);
 
     const genkitHistory: Message[] = newMessages
-        .filter(m => m.content?.trim() !== '') // Filter out empty messages
+        .filter(m => m.content?.trim() !== '') 
         .map(m => ({ role: m.role, content: [{text: m.content}] }));
 
     try {
-        const stream = await chat(genkitHistory);
-        
-        let isFirstChunk = true;
-        let modelResponse = '';
+        const modelResponse = await chat(genkitHistory);
+        setMessages(prev => [...prev, { role: 'model', content: modelResponse }]);
 
-        for await (const chunk of stream) {
-            modelResponse += chunk;
-            if (isFirstChunk) {
-                setMessages(prev => [...prev, { role: 'model', content: modelResponse }]);
-                isFirstChunk = false;
-            } else {
-                 setMessages(prev => {
-                    const lastMessageIndex = prev.length - 1;
-                    const updatedMessages = [...prev];
-                    if (updatedMessages[lastMessageIndex]?.role === 'model') {
-                        updatedMessages[lastMessageIndex] = { ...updatedMessages[lastMessageIndex], content: modelResponse };
-                    }
-                    return updatedMessages;
-                });
-            }
-        }
     } catch (error) {
         console.error("Error fetching chatbot response:", error);
          setMessages(prev => [
@@ -148,7 +130,7 @@ export default function ChatbotPopup() {
                     </div>
                   </div>
                 ))}
-                 {isLoading && messages[messages.length - 1]?.role === 'user' && (
+                 {isLoading && (
                     <div className="flex gap-2 items-start justify-start">
                         <div className="p-2 bg-primary text-primary-foreground rounded-full">
                             <Bot className="w-5 h-5" />
