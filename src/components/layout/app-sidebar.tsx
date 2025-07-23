@@ -20,7 +20,6 @@ const navItems = [
   { href: '/events', label: 'Kegiatan', icon: CalendarDays },
   { href: '/membership', label: 'Keanggotaan', icon: Users },
   { href: '/archive', label: 'Arsip', icon: Archive },
-  { href: '/summarize', label: 'Ringkasan Dokumen', icon: Bot },
 ]
 
 export function AppSidebar() {
