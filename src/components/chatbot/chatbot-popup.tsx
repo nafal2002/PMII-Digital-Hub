@@ -32,22 +32,16 @@ export default function ChatbotPopup() {
     const userMessage: Message = { role: 'user', content: input };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
+    const userInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
         setMessages(prev => [...prev, { role: 'model', content: '' }]);
 
-        const stream = await chat(newMessages, input);
-        const reader = stream.getReader();
-        const decoder = new TextDecoder();
+        const stream = await chat(newMessages, userInput);
         
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            
-            const chunk = decoder.decode(value, { stream: true });
-            
+        for await (const chunk of stream) {
             setMessages(prev => {
                 const lastMessage = prev[prev.length - 1];
                 if (lastMessage && lastMessage.role === 'model') {
@@ -55,7 +49,8 @@ export default function ChatbotPopup() {
                     updatedMessages.push({ role: 'model', content: lastMessage.content + chunk });
                     return updatedMessages;
                 }
-                return prev;
+                // Should not happen, but as a fallback
+                return [...prev, { role: 'model', content: chunk }];
             });
         }
 
