@@ -1,3 +1,4 @@
+
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -64,41 +65,48 @@ export default function MembershipPage() {
     const [isDownloading, setIsDownloading] = useState(false);
     
     const initialTab = searchParams.get("tab") || "registration";
-    const [activeTab, setActiveTab] = useState(initialTab);
+    const memberIdFromParams = searchParams.get("memberId");
 
+    const [activeTab, setActiveTab] = useState(initialTab);
     const [selectedMemberForCard, setSelectedMemberForCard] = useState<MemberData | null>(null);
     const [key, setKey] = useState(Date.now()); // Key to re-render MemberList
 
     const cardRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-      const memberId = searchParams.get("memberId");
-      const fetchMemberForCard = async () => {
-        if (memberId) {
-          try {
-            const result = await getMemberById({ id: memberId });
-            if (result.member) {
-              setSelectedMemberForCard(result.member);
-              setActiveTab("card");
-            } else {
-              toast({
-                variant: "destructive",
-                title: "Gagal Memuat Anggota",
-                description: "Anggota yang dipilih tidak ditemukan.",
-              });
-            }
-          } catch (error) {
+      const fetchMemberForCard = async (memberId: string) => {
+        try {
+          const result = await getMemberById({ id: memberId });
+          if (result.member) {
+            setSelectedMemberForCard(result.member);
+          } else {
             toast({
               variant: "destructive",
               title: "Gagal Memuat Anggota",
-              description: "Terjadi kesalahan saat memuat data anggota untuk kartu.",
+              description: "Anggota yang dipilih tidak ditemukan.",
             });
           }
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            title: "Gagal Memuat Anggota",
+            description: "Terjadi kesalahan saat memuat data anggota untuk kartu.",
+          });
         }
       };
-      
-      fetchMemberForCard();
-    }, [searchParams, toast]);
+
+      if (activeTab === "card" && memberIdFromParams) {
+        fetchMemberForCard(memberIdFromParams);
+      }
+    }, [activeTab, memberIdFromParams, toast]);
+    
+    // Effect to switch tab if memberId is in URL on initial load
+    useEffect(() => {
+        if (memberIdFromParams) {
+            setActiveTab("card");
+        }
+    }, [memberIdFromParams]);
+
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -185,13 +193,22 @@ export default function MembershipPage() {
       }
     };
 
+    const handleTabChange = (value: string) => {
+        setActiveTab(value);
+        // Clean up URL params when leaving card tab
+        if (value !== 'card') {
+            router.push('/membership');
+            setSelectedMemberForCard(null);
+        }
+    }
+
   return (
     <div className="space-y-8">
         <div>
             <h1 className="text-3xl font-bold font-headline">Data Keanggotaan</h1>
             <p className="text-muted-foreground">Formulir pendaftaran, daftar anggota, dan kartu anggota digital.</p>
         </div>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="registration">Pendaftaran</TabsTrigger>
                 <TabsTrigger value="list">Daftar Anggota</TabsTrigger>
@@ -305,7 +322,7 @@ export default function MembershipPage() {
                             <AlertTitle>Pilih Anggota</AlertTitle>
                             <AlertDescription>
                                 Silakan kembali ke tab "Daftar Anggota", pilih anggota untuk dilihat profilnya, lalu buat kartu dari sana.
-                            </AlertDescription>
+                            </Aler tDescription>
                         </Alert>
                        )}
                     </CardContent>
@@ -315,3 +332,5 @@ export default function MembershipPage() {
     </div>
   )
 }
+
+    
