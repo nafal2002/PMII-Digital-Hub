@@ -45,6 +45,7 @@ export default function ChatbotPopup() {
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
 
+    // This history is only for the server action call, not stored in state
     const genkitHistory: Message[] = newMessages.map(m => ({ role: m.role, content: m.content }));
     const currentInput = input;
     
