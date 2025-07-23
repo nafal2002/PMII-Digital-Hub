@@ -1,3 +1,4 @@
+
 'use client'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,6 +6,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import Image from "next/image";
 import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 const pastEvents = [
     { src: "https://placehold.co/600x400.png", alt: "PKD 2023", hint: "student meeting" },
@@ -53,16 +62,38 @@ export default function EventsPage() {
                     <CardContent>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {pastEvents.map((event, index) => (
-                                <div key={index} className="overflow-hidden rounded-lg">
-                                    <Image
-                                        src={event.src}
-                                        alt={event.alt}
-                                        width={600}
-                                        height={400}
-                                        data-ai-hint={event.hint}
-                                        className="h-auto w-full object-cover transition-transform hover:scale-105"
-                                    />
-                                </div>
+                                <Dialog key={index}>
+                                    <DialogTrigger asChild>
+                                        <div className="overflow-hidden rounded-lg cursor-pointer">
+                                            <Image
+                                                src={event.src}
+                                                alt={event.alt}
+                                                width={600}
+                                                height={400}
+                                                data-ai-hint={event.hint}
+                                                className="h-auto w-full object-cover transition-transform hover:scale-105"
+                                            />
+                                        </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-[625px]">
+                                        <DialogHeader>
+                                            <DialogTitle className="font-headline">{event.alt}</DialogTitle>
+                                            <DialogDescription>
+                                                Dokumentasi kegiatan yang telah berlangsung.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="rounded-lg overflow-hidden border">
+                                           <Image
+                                                src={event.src}
+                                                alt={event.alt}
+                                                width={600}
+                                                height={400}
+                                                data-ai-hint={event.hint}
+                                                className="h-auto w-full object-cover"
+                                            />
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
                             ))}
                         </div>
                     </CardContent>
