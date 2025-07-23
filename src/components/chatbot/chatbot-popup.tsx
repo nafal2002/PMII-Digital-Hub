@@ -19,7 +19,7 @@ interface ChatMessage {
 
 const initialBotMessage: ChatMessage = {
   role: 'model',
-  content: 'Assalamualaikum! Saya Sahabat/i AI. Ada yang bisa saya bantu terkait PMII atau pertanyaan umum lainnya?'
+  content: 'Assalamualaikum! Saya Sahabat/i AI. Ada yang bisa saya bantu terkait PMII?'
 };
 
 export default function ChatbotPopup() {
@@ -48,7 +48,7 @@ export default function ChatbotPopup() {
     setIsLoading(true);
 
     const genkitHistory: Message[] = newMessages
-        .filter(m => m.content.trim() !== '') // Filter out empty messages
+        .filter(m => m.content?.trim() !== '') // Filter out empty messages
         .map(m => ({ role: m.role, content: [{text: m.content}] }));
 
     try {
@@ -77,7 +77,7 @@ export default function ChatbotPopup() {
         console.error("Error fetching chatbot response:", error);
          setMessages(prev => [
             ...prev,
-            { role: 'model', content: "Maaf, terjadi kesalahan saat memproses permintaan Anda. Silakan coba lagi." }
+            { role: 'model', content: "Maaf, terjadi kesalahan. Silakan coba lagi." }
         ]);
     } finally {
         setIsLoading(false);
@@ -141,14 +141,10 @@ export default function ChatbotPopup() {
                         'rounded-lg px-4 py-2 max-w-xs break-words whitespace-pre-wrap',
                         message.role === 'user'
                           ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted',
-                        isLoading && index === messages.length - 1 && message.role === 'model' && !message.content
+                          : 'bg-muted'
                       )}
                     >
                       {message.content}
-                      {isLoading && index === messages.length - 1 && message.role === 'model' && !message.content && (
-                         <Loader2 className="w-5 h-5 animate-spin"/>
-                      )}
                     </div>
                   </div>
                 ))}
