@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Lightbulb, ArrowRight, Users, BookOpen, Calendar, FileArchive, Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getMembers } from "@/ai/flows/get-members";
+import type { MemberData } from "@/ai/flows/get-members";
 
 const quickStats = [
   { title: "Materi", value: "11 Modul", icon: BookOpen, href: "/modules" },
@@ -38,8 +38,12 @@ export default function Home() {
     useEffect(() => {
         const fetchMemberCount = async () => {
             try {
-                const result = await getMembers();
-                setMemberCount(result.members.length);
+                const response = await fetch('/api/members');
+                 if (!response.ok) {
+                    throw new Error('Gagal mengambil data anggota');
+                }
+                const data : { members: MemberData[] } = await response.json();
+                setMemberCount(data.members.length);
             } catch (error) {
                 console.error("Failed to fetch member count:", error);
                 setMemberCount(0); // Default to 0 on error

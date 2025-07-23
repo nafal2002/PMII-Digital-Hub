@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getMembers, MemberData } from '@/ai/flows/get-members';
+import type { MemberData } from '@/ai/flows/get-members';
 import {
   Table,
   TableBody,
@@ -27,12 +27,15 @@ export function MemberList() {
       try {
         setIsLoading(true);
         setError('');
-        const result = await getMembers();
-        // Sort members by fullName alphabetically
-        const sortedMembers = result.members.sort((a, b) => a.fullName.localeCompare(b.fullName));
+        const response = await fetch('/api/members');
+        if (!response.ok) {
+          throw new Error('Gagal mengambil data anggota');
+        }
+        const data = await response.json();
+        const sortedMembers = data.members.sort((a: MemberData, b: MemberData) => a.fullName.localeCompare(b.fullName));
         setMembers(sortedMembers);
-      } catch (err) {
-        setError('Gagal memuat data anggota. Silakan coba lagi nanti.');
+      } catch (err: any) {
+        setError(err.message || 'Gagal memuat data anggota. Silakan coba lagi nanti.');
         console.error(err);
       } finally {
         setIsLoading(false);
