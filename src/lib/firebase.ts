@@ -3,12 +3,12 @@ import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  projectId: "pmii-digital-hub",
-  appId: "1:373870118437:web:cdc1ed9cb95d47d05fe1cc",
-  storageBucket: "pmii-digital-hub.appspot.com",
-  apiKey: "AIzaSyCJmgDIIzUzRAob7IXhq2XeZuePVcdtm18",
-  authDomain: "pmii-digital-hub.firebaseapp.com",
-  messagingSenderId: "373870118437",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
 };
 
 // Initialize Firebase
