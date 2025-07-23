@@ -59,16 +59,15 @@ const chatbotFlow = ai.defineFlow(
     stream: true,
   },
   async ({ history, prompt }) => {
-    const llmResponse = await ai.generate({
+    const { stream } = ai.generateStream({
       model: 'googleai/gemini-2.0-flash',
       history: history,
       prompt: prompt,
       tools: [getEventsTool, getModulesTool],
       system: chatbotSystemPrompt,
-      stream: true
     });
 
-    return llmResponse.stream();
+    return stream;
   }
 );
 
