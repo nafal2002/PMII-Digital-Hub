@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { BookOpenCheck, Download, Video, BookDashed } from "lucide-react";
 import type { ModuleData } from '@/ai/flows/get-modules';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // --- DATA MODUL LOKAL ---
 // Untuk menambah modul baru:
@@ -13,18 +14,25 @@ import type { ModuleData } from '@/ai/flows/get-modules';
 //    - `fileUrl` harus diawali dengan `/modules/` diikuti nama file PDF Anda.
 const localModules: ModuleData[] = [
   {
+    id: "4",
+    title: "Buku Menjadi Kader PMII",
+    description: "Buku panduan lengkap untuk menjadi kader PMII yang berkualitas, mencakup materi dasar dan lanjutan.",
+    category: "Panduan Kader",
+    fileUrl: "/modules/Buku Menjadi Kader PMII.pdf",
+  },
+  {
     id: "1",
     title: "Nilai Dasar Pergerakan (NDP)",
     description: "Penjelasan mendalam mengenai landasan ideologis dan filosofis PMII sebagai pedoman pergerakan.",
     category: "Ideologi",
-    fileUrl: "/modules/contoh-modul-1.pdf", // Ganti dengan nama file Anda
+    fileUrl: "/modules/contoh-modul-1.pdf",
   },
   {
     id: "2",
     title: "Anggaran Dasar & Rumah Tangga (AD/ART)",
     description: "Dokumen konstitusional yang mengatur seluruh aspek organisasi, keanggotaan, dan hierarki PMII.",
     category: "Konstitusi",
-    fileUrl: "/modules/contoh-modul-2.pdf", // Ganti dengan nama file Anda
+    fileUrl: "/modules/contoh-modul-2.pdf",
   },
   {
     id: "3",
