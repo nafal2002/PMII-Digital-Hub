@@ -121,7 +121,7 @@ function ModuleList() {
             <CardContent className="flex-grow flex flex-col">
               <p className="text-sm mb-4 font-body flex-grow">{module.description}</p>
               <Button asChild variant="outline" className="w-full mt-auto" disabled={!module.fileUrl}>
-                  <a href={module.fileUrl} target="_blank" rel="noopener noreferrer">
+                  <a href={module.fileUrl} target="_blank" rel="noopener noreferrer" download>
                       <Download className="mr-2 h-4 w-4" />
                       Download
                   </a>
