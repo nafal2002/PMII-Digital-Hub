@@ -48,17 +48,7 @@ When using tool output, present the information in a clear and easy-to-read form
 Do not just repeat the tool output. Your response should be a complete sentence and add context.
 `;
 
-const chatbotFlow = ai.defineFlow(
-  {
-    name: 'chatbotFlow',
-    inputSchema: z.object({
-      history: z.array(z.custom<Message>()),
-      prompt: z.string(),
-    }),
-    outputSchema: z.string(),
-    stream: true,
-  },
-  async ({ history, prompt }) => {
+export async function chat(history: Message[], prompt: string): Promise<ReadableStream<string>> {
     const { stream } = ai.generateStream({
       model: 'googleai/gemini-2.0-flash',
       history: history,
@@ -67,18 +57,12 @@ const chatbotFlow = ai.defineFlow(
       system: chatbotSystemPrompt,
     });
 
-    return stream;
-  }
-);
-
-
-export async function chat(history: Message[], prompt: string): Promise<ReadableStream<string>> {
-    const stream = await chatbotFlow({ history, prompt });
-
     return new ReadableStream({
         async start(controller) {
             for await (const chunk of stream) {
-                controller.enqueue(chunk.output || '');
+                if (chunk.output) {
+                   controller.enqueue(chunk.output);
+                }
             }
             controller.close();
         }
