@@ -9,11 +9,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getModules as fetchModules, type ModuleData } from './get-modules';
-import { getMembers as fetchMembers, type MemberData } from './get-members';
-import { getDocuments as fetchDocuments, type DocumentData } from './get-documents';
+import { getModules as fetchModules } from './get-modules';
+import { getMembers as fetchMembers } from './get-members';
+import { getDocuments as fetchDocuments } from './get-documents';
 import type { Message, Stream } from 'genkit';
-
 
 // == Schemas for Tooling ==
 // This tells the AI what the data looks like.
@@ -47,6 +46,7 @@ const MemberDataSchema = z.object({
 });
 
 const DocumentDataSchema = z.object({
+    id: z.string().describe("The unique ID of the document."),
     title: z.string().describe("The title of the document."),
     description: z.string().describe("A brief description of the document's contents."),
     category: z.string().describe("The category of the document (e.g., Dasar Organisasi, LPJ).")
@@ -85,12 +85,8 @@ const upcomingEvents: EventData[] = [
     }
 ];
 
-async function getEvents(input: { type: 'past' | 'upcoming' }): Promise<EventData[]> {
-  if (input.type === 'past') {
-    return pastEvents;
-  } else {
-    return upcomingEvents;
-  }
+async function getEvents(input: { type: 'past' | 'upcoming' }) {
+  return input.type === 'past' ? pastEvents : upcomingEvents;
 }
 
 // == Tool Definitions ==
@@ -105,7 +101,7 @@ const getEventsTool = ai.defineTool(
     }),
     outputSchema: z.array(EventSchema),
   },
-  async (input) => getEvents(input)
+  getEvents
 );
 
 const getModulesTool = ai.defineTool(
@@ -139,8 +135,8 @@ const getDocumentsTool = ai.defineTool(
 );
 
 
-// == AI System Prompt ==
-// This is the main instruction for the AI.
+// == AI System Prompt & Model Configuration ==
+// This is the main instruction and tool configuration for the AI.
 
 const chatbotSystemPrompt = `You are an expert and friendly AI assistant named Sahabat/i AI, designed for the Pergerakan Mahasiswa Islam Indonesia (PMII).
 You can answer general knowledge questions just like a regular assistant.
@@ -152,45 +148,21 @@ Keep your answers concise and to the point.
 If you don't know the answer to a specific PMII question and the tools don't provide it, say so honestly.
 `;
 
+const chatbotPrompt = ai.definePrompt({
+    name: 'chatbotPrompt',
+    model: 'googleai/gemini-2.0-flash',
+    system: chatbotSystemPrompt,
+    tools: [getEventsTool, getModulesTool, getMembersTool, getDocumentsTool],
+});
+
 
 // == Main Chat Function ==
 
 export async function chat(history: Message[], prompt: string): Promise<Stream<string>> {
-  try {
-      const { stream, response } = await ai.generateStream({
-        model: 'googleai/gemini-2.0-flash',
-        history: history,
-        prompt: prompt,
-        tools: [getEventsTool, getModulesTool, getMembersTool, getDocumentsTool],
-        system: chatbotSystemPrompt,
-      });
-      
-      const result = await response;
-      if (!result.output) {
-          console.error("Chatbot AI did not produce an output.", result);
-          // Return a simple text stream with the error message
-          const errorStream = new ReadableStream({
-              start(controller) {
-                  controller.enqueue("Maaf, saya tidak dapat memproses permintaan Anda saat ini. Silakan coba lagi nanti.");
-                  controller.close();
-              }
-          });
-          // Cast to Stream<string>
-          return errorStream as Stream<string>;
-      }
-
-      return stream;
-
-  } catch (error) {
-      console.error("Error during AI generation stream:", error);
-      // Return a simple text stream with the error message
-      const errorStream = new ReadableStream({
-          start(controller) {
-              controller.enqueue("Maaf, terjadi kesalahan pada server. Coba lagi nanti.");
-              controller.close();
-          }
-      });
-      // Cast to Stream<string>
-      return errorStream as Stream<string>;
-  }
+  const { stream } = await ai.generateStream({
+      prompt: chatbotPrompt,
+      history: history,
+      input: prompt,
+  });
+  return stream;
 }
