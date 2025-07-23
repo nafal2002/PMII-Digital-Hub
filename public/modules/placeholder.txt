@@ -1,0 +1,5 @@
+Anda dapat menempatkan file-file PDF modul Anda di dalam folder ini.
+
+Setelah menempatkan file (misalnya: 'modul-pkd.pdf'), Anda perlu menambahkan entrinya secara manual di Firestore Database pada koleksi 'modules'. Pastikan field 'fileUrl' diisi dengan path lokal, contoh: '/modules/modul-pkd.pdf'.
+
+File ini bisa dihapus dengan aman.
