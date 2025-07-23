@@ -1,17 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, FileText } from "lucide-react";
+import { getDocuments } from "@/ai/flows/get-documents";
 
-const documents = [
-  { title: "AD/ART PMII", description: "Anggaran Dasar dan Anggaran Rumah Tangga terbaru.", category: "Dasar Organisasi" },
-  { title: "Notulen Rapat Pleno I", description: "Hasil rapat pleno pengurus cabang, Januari 2024.", category: "Notulensi" },
-  { title: "LPJ Kegiatan PKD 2023", description: "Laporan pertanggungjawaban kegiatan Pelatihan Kader Dasar 2023.", category: "LPJ" },
-  { title: "SK Pengurus Cabang", description: "Surat Keputusan pengesahan pengurus cabang periode 2023-2024.", category: "Surat Keputusan" },
-  { title: "Panduan Administrasi", description: "Pedoman resmi terkait surat-menyurat dan administrasi.", category: "Panduan" },
-  { title: "Sejarah dan NDP PMII", description: "Dokumen sejarah dan Nilai Dasar Pergerakan.", category: "Dasar Organisasi" },
-];
+export default async function ArchivePage() {
+  const { documents } = await getDocuments();
 
-export default function ArchivePage() {
   return (
     <div className="space-y-8">
       <div>

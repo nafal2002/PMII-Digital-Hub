@@ -12,6 +12,7 @@ import { z } from 'genkit';
 import { getEvents as fetchEvents, type GetEventsOutput } from './get-events';
 import { getModules as fetchModules, type ModuleData } from './get-modules';
 import { getMembers as fetchMembers, type MemberData } from './get-members';
+import { getDocuments as fetchDocuments, type DocumentData } from './get-documents';
 import type { Message, Stream } from 'genkit';
 
 
@@ -44,6 +45,12 @@ const MemberDataSchema = z.object({
   whatsapp: z.string().describe("The member's WhatsApp number."),
 });
 
+const DocumentDataSchema = z.object({
+    title: z.string().describe("The title of the document."),
+    description: z.string().describe("A brief description of the document's contents."),
+    category: z.string().describe("The category of the document (e.g., Dasar Organisasi, LPJ).")
+});
+
 
 // == Tool Definitions ==
 // These are the capabilities we give to the AI.
@@ -65,9 +72,9 @@ const getModulesTool = ai.defineTool(
     name: 'getModules',
     description: 'Get a list of all available learning modules for PMII. Use this to answer questions about what modules exist or how many there are.',
     inputSchema: z.object({}),
-    outputSchema: z.object({ modules: z.array(ModuleDataSchema) }),
+    outputSchema: z.array(ModuleDataSchema),
   },
-  async () => fetchModules()
+  async () => (await fetchModules()).modules
 );
 
 const getMembersTool = ai.defineTool(
@@ -75,9 +82,19 @@ const getMembersTool = ai.defineTool(
         name: 'getMembers',
         description: 'Get a list of all registered members of PMII. Use this to count the total number of members or answer questions about members.',
         inputSchema: z.object({}),
-        outputSchema: z.object({ members: z.array(MemberDataSchema) }),
+        outputSchema: z.array(MemberDataSchema),
     },
-    async () => fetchMembers()
+    async () => (await fetchMembers()).members
+);
+
+const getDocumentsTool = ai.defineTool(
+    {
+        name: 'getDocuments',
+        description: 'Get a list of available documents and archives, such as AD/ART, Notulen, LPJ, and other official letters.',
+        inputSchema: z.object({}),
+        outputSchema: z.array(DocumentDataSchema),
+    },
+    async () => (await fetchDocuments()).documents
 );
 
 
@@ -86,7 +103,7 @@ const getMembersTool = ai.defineTool(
 
 const chatbotSystemPrompt = `You are an expert and friendly AI assistant named Sahabat/i AI, designed for the Pergerakan Mahasiswa Islam Indonesia (PMII).
 You can answer general knowledge questions just like a regular assistant.
-However, if a question is specifically about PMII, its events, its learning modules, or its members, you MUST use the provided tools to get the information. For example, to answer "how many members are there?", you must use the getMembers tool. To answer "what modules are available?", you must use the getModules tool.
+However, if a question is specifically about PMII, its events, its learning modules, its members, or its documents/archives, you MUST use the provided tools to get the information. For example, to answer "how many members are there?", you must use the getMembers tool. To answer "what modules are available?", you must use the getModules tool. To answer "show me the AD/ART document", you must use the getDocuments tool.
 You should always be friendly and helpful.
 You must answer in Bahasa Indonesia.
 When presenting information from tools, format it clearly using lists or summaries, but do not just repeat the raw JSON output. Add context and present it in a conversational way.
@@ -102,7 +119,7 @@ export async function chat(history: Message[], prompt: string): Promise<Stream<s
       model: 'googleai/gemini-2.0-flash',
       history: history,
       prompt: prompt,
-      tools: [getEventsTool, getModulesTool, getMembersTool],
+      tools: [getEventsTool, getModulesTool, getMembersTool, getDocumentsTool],
       system: chatbotSystemPrompt,
     });
     
