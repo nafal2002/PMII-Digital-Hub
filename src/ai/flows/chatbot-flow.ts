@@ -4,164 +4,177 @@
 /**
  * @fileOverview A chatbot flow that can answer questions about PMII.
  *
- * This flow uses tools to access information about events, modules, and members.
+ * This flow uses a static context injected directly into the prompt,
+ * rather than dynamic tools, to ensure reliability and consistency.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getModules as fetchModules } from './get-modules';
-import { getMembers as fetchMembers } from './get-members';
-import { getDocuments as fetchDocuments } from './get-documents';
 import type { Message, Stream } from 'genkit';
 
-// == Schemas for Tooling ==
-// This tells the AI what the data looks like.
+// == MANUAL DATA SOURCES ==
+// All data is hardcoded here to be passed directly to the AI model.
 
-const EventSchema = z.object({
-    name: z.string().optional().describe("The name or title of the event."),
-    description: z.string().optional().describe("A brief description of the event."),
-    src: z.string().optional().describe("A URL to an image for the event."),
-    alt: z.string().optional().describe("Alternative text for the event image."),
-    hint: z.string().optional().describe("A hint for AI image generation."),
-});
-export type EventData = z.infer<typeof EventSchema>;
-
-
-const ModuleDataSchema = z.object({
-  id: z.string().describe('The unique identifier for the module.'),
-  title: z.string().describe('The title of the module.'),
-  description: z.string().describe('A description of what the module contains.'),
-  category: z.string().describe('The category of the module (e.g., Ideologi, Praktis).'),
-  fileUrl: z.string().optional().describe('The URL to the module file (if available).'),
-});
-
-const MemberDataSchema = z.object({
-  id: z.string().describe("The member's unique ID."),
-  fullName: z.string().describe("The full name of the member."),
-  nim: z.string().describe("The member's student identification number."),
-  faculty: z.string().describe("The member's faculty."),
-  year: z.string().describe("The member's enrollment year."),
-  email: z.string().email().describe("The member's email address."),
-  whatsapp: z.string().describe("The member's WhatsApp number."),
-});
-
-const DocumentDataSchema = z.object({
-    id: z.string().describe("The unique ID of the document."),
-    title: z.string().describe("The title of the document."),
-    description: z.string().describe("A brief description of the document's contents."),
-    category: z.string().describe("The category of the document (e.g., Dasar Organisasi, LPJ).")
-});
-
-
-// == Tool Data Sources ==
-
-const pastEvents: EventData[] = [
-  {
-    src: 'https://placehold.co/600x400.png',
-    alt: 'PKD 2023',
-    hint: 'student meeting',
-  },
-  {
-    src: 'https://placehold.co/600x400.png',
-    alt: 'Seminar Kebangsaan',
-    hint: 'conference presentation',
-  },
-  {
-    src: 'https://placehold.co/600x400.png',
-    alt: 'Aksi Sosial',
-    hint: 'community volunteering',
-  },
-  {
-    src: 'https://placehold.co/600x400.png',
-    alt: 'Rapat Anggota',
-    hint: 'group discussion',
-  },
-];
-
-const upcomingEvents: EventData[] = [
+const upcomingEvents = [
     {
         name: "Pelatihan Kader Dasar (PKD) 2024",
         description: "Pendaftaran PKD angkatan ke-XXI telah dibuka. Segera daftarkan diri Anda sebelum kuota terpenuhi."
     }
 ];
 
-async function getEvents(input: { type: 'past' | 'upcoming' }) {
-  return input.type === 'past' ? pastEvents : upcomingEvents;
-}
+const pastEvents = [
+  { name: 'PKD 2023' },
+  { name: 'Seminar Kebangsaan' },
+  { name: 'Aksi Sosial' },
+  { name: 'Rapat Anggota' },
+];
 
-// == Tool Definitions ==
-// These are the capabilities we give to the AI.
-
-const getEventsTool = ai.defineTool(
+const modules = [
   {
-    name: 'getEvents',
-    description: 'Get a list of upcoming and past events for PMII.',
-    inputSchema: z.object({
-      type: z.enum(['past', 'upcoming']).describe('The type of events to get.'),
-    }),
-    outputSchema: z.array(EventSchema),
+    title: "Buku Menjadi Kader PMII",
+    description: "Buku panduan lengkap untuk menjadi kader PMII yang berkualitas, mencakup materi dasar dan lanjutan.",
+    category: "Panduan Kader",
   },
-  getEvents
-);
-
-const getModulesTool = ai.defineTool(
   {
-    name: 'getModules',
-    description: 'Get a list of all available learning modules for PMII. Use this to answer questions about what modules exist or how many there are.',
-    inputSchema: z.object({}),
-    outputSchema: z.array(ModuleDataSchema),
+    title: "Nilai Dasar Pergerakan (NDP)",
+    description: "Penjelasan mendalam mengenai landasan ideologis dan filosofis PMII sebagai pedoman pergerakan.",
+    category: "Ideologi",
   },
-  async () => (await fetchModules()).modules
-);
+  {
+    title: "Anggaran Dasar & Rumah Tangga (AD/ART)",
+    description: "Dokumen konstitusional yang mengatur seluruh aspek organisasi, keanggotaan, dan hierarki PMII.",
+    category: "Konstitusi",
+  },
+  {
+    title: "Manajemen Aksi & Advokasi",
+    description: "Panduan praktis untuk merancang, mengorganisir, dan melaksanakan aksi serta advokasi kebijakan.",
+    category: "Praktis",
+  },
+  {
+    title: "Hasil Muspimnas Tulungagung 2022",
+    description: "Kumpulan hasil dan keputusan dari Musyawarah Pimpinan Nasional PMII yang diselenggarakan di Tulungagung pada tahun 2022.",
+    category: "Musyawarah Nasional",
+  },
+  {
+    title: "Materi Teknik Persidangan",
+    description: "Panduan dan materi mengenai teknik-teknik persidangan yang efektif untuk Pelatihan Kader Dasar (PKD).",
+    category: "Praktis",
+  },
+  {
+    title: "Modul MAPABA Proletariat",
+    description: "Modul untuk Masa Penerimaan Anggota Baru (MAPABA) dengan fokus pada analisis dan kesadaran kelas proletariat.",
+    category: "MAPABA",
+  },
+  {
+    title: "Materi Nahdlatunnisa",
+    description: "Materi khusus keperempuanan dari KOPRI PMII Kabupaten Bekasi, membahas peran dan tantangan kader putri.",
+    category: "KOPRI",
+  },
+  {
+    title: "Dasar-Dasar PMII",
+    description: "Presentasi yang mencakup tiga pilar utama PMII: aspek historis, landasan konstitusi, dan paradigma pergerakan.",
+    category: "Dasar Organisasi",
+  },
+  {
+    title: "Materi Ke-KOPRI-an",
+    description: "Presentasi dasar mengenai Korps PMII Putri (KOPRI), mencakup sejarah, peran, dan pedoman organisasi.",
+    category: "KOPRI",
+  },
+  {
+    title: "Dasar-Dasar Aswaja",
+    description: "Presentasi mengenai Ahlussunnah wal Jama'ah (Aswaja) sebagai landasan ideologis dan amaliah warga PMII.",
+    category: "Ideologi",
+  }
+];
 
-const getMembersTool = ai.defineTool(
-    {
-        name: 'getMembers',
-        description: 'Get a list of all registered members of PMII. Use this to count the total number of members or answer questions about members.',
-        inputSchema: z.object({}),
-        outputSchema: z.array(MemberDataSchema),
-    },
-    async () => (await fetchMembers()).members
-);
+const documents = [
+  { title: "AD/ART PMII", description: "Anggaran Dasar dan Anggaran Rumah Tangga terbaru.", category: "Dasar Organisasi" },
+  { title: "Notulen Rapat Pleno I", description: "Hasil rapat pleno pengurus cabang, Januari 2024.", category: "Notulensi" },
+  { title: "LPJ Kegiatan PKD 2023", description: "Laporan pertanggungjawaban kegiatan Pelatihan Kader Dasar 2023.", category: "LPJ" },
+  { title: "SK Pengurus Cabang", description: "Surat Keputusan pengesahan pengurus cabang periode 2023-2024.", category: "Surat Keputusan" },
+  { title: "Panduan Administrasi", description: "Pedoman resmi terkait surat-menyurat dan administrasi.", category: "Panduan" },
+  { title: "Sejarah dan NDP PMII", description: "Dokumen sejarah dan Nilai Dasar Pergerakan.", category: "Dasar Organisasi" },
+];
 
-const getDocumentsTool = ai.defineTool(
-    {
-        name: 'getDocuments',
-        description: 'Get a list of available documents and archives, such as AD/ART, Notulen, LPJ, and other official letters.',
-        inputSchema: z.object({}),
-        outputSchema: z.array(DocumentDataSchema),
-    },
-    async () => (await fetchDocuments()).documents
-);
+const members = [
+    // This is sample data. In a real application, this would come from a database.
+    { fullName: "Ahmad Zaini", nim: "12345", faculty: "Teknik", year: "2021" },
+    { fullName: "Siti Fatimah", nim: "67890", faculty: "Hukum", year: "2022" },
+];
 
 
 // == AI System Prompt & Model Configuration ==
-// This is the main instruction and tool configuration for the AI.
 
 const chatbotSystemPrompt = `You are an expert and friendly AI assistant named Sahabat/i AI, designed for the Pergerakan Mahasiswa Islam Indonesia (PMII).
 You can answer general knowledge questions just like a regular assistant.
-However, if a question is specifically about PMII, its events, its learning modules, its members, or its documents/archives, you MUST use the provided tools to get the information. For example, to answer "how many members are there?", you must use the getMembers tool. To answer "what modules are available?", you must use the getModules tool. To answer "show me the AD/ART document", you must use the getDocuments tool.
-You should always be friendly and helpful.
+However, if a question is specifically about PMII, its events, its learning modules, its members, or its documents/archives, you MUST use the provided information below to answer.
+
 You must answer in Bahasa Indonesia.
-When presenting information from tools, format it clearly using lists or summaries, but do not just repeat the raw JSON output. Add context and present it in a conversational way.
+When presenting information, format it clearly using lists or summaries. Add context and present it in a conversational way.
 Keep your answers concise and to the point.
-If you don't know the answer to a specific PMII question and the tools don't provide it, say so honestly.
+If you don't know the answer to a specific PMII question from the context below, say so honestly.
+
+Here is the information you have about PMII:
+
+## Acara Akan Datang
+{{#each upcomingEvents}}
+- **{{name}}**: {{description}}
+{{/each}}
+
+## Acara yang Lalu
+{{#each pastEvents}}
+- {{name}}
+{{/each}}
+
+## Modul Kaderisasi (Total: {{modules.length}} modul)
+{{#each modules}}
+- **{{title}}** (Kategori: {{category}}): {{description}}
+{{/each}}
+
+## Dokumen & Arsip (Total: {{documents.length}} dokumen)
+{{#each documents}}
+- **{{title}}** (Kategori: {{category}}): {{description}}
+{{/each}}
+
+## Data Anggota
+- Total Anggota Terdaftar: {{members.length}} orang.
 `;
 
 const chatbotPrompt = ai.definePrompt({
     name: 'chatbotPrompt',
     model: 'googleai/gemini-2.0-flash',
     system: chatbotSystemPrompt,
-    tools: [getEventsTool, getModulesTool, getMembersTool, getDocumentsTool],
+    input: {
+        schema: z.object({
+            history: z.array(z.custom<Message>()),
+            upcomingEvents: z.any(),
+            pastEvents: z.any(),
+            modules: z.any(),
+            documents: z.any(),
+            members: z.any(),
+        })
+    }
 });
 
 
 // == Main Chat Function ==
 
 export async function chat(history: Message[]): Promise<Stream<string>> {
+
   const { stream } = ai.generateStream({
-      prompt: {template: chatbotPrompt},
+      prompt: {
+        template: chatbotPrompt,
+        input: {
+            history,
+            upcomingEvents,
+            pastEvents,
+            modules,
+            documents,
+            members,
+        }
+      },
       history: history.filter(m => m.content?.[0]?.text?.trim() !== ''), // Ensure we dont send empty parts
   });
+
   return stream;
 }
