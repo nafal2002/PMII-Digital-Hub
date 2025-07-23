@@ -36,25 +36,25 @@ export default function ChatbotPopup() {
     setIsLoading(true);
 
     try {
+        // Add an empty model message to start streaming into.
+        setMessages(prev => [...prev, { role: 'model', content: '' }]);
+
         const stream = await chat(messages, input);
         const reader = stream.getReader();
         const decoder = new TextDecoder();
-        let fullResponse = '';
-
-        setMessages(prev => [...prev, { role: 'model', content: '' }]);
-
+        
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
             
             const chunk = decoder.decode(value, { stream: true });
-            fullResponse += chunk;
-
+            
+            // Append the chunk to the last message (which is the model's response)
             setMessages(prev => {
                 const lastMessage = prev[prev.length - 1];
                 if (lastMessage.role === 'model') {
                     const updatedMessages = [...prev.slice(0, -1)];
-                    updatedMessages.push({ role: 'model', content: fullResponse });
+                    updatedMessages.push({ role: 'model', content: lastMessage.content + chunk });
                     return updatedMessages;
                 }
                 return prev;
