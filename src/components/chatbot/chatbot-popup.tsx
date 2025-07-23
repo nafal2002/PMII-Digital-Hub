@@ -19,10 +19,10 @@ export default function ChatbotPopup() {
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({
-        top: scrollAreaRef.current.scrollHeight,
-        behavior: 'smooth',
-      });
+      const viewport = scrollAreaRef.current.querySelector('div');
+      if (viewport) {
+        viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+      }
     }
   };
   
@@ -36,10 +36,9 @@ export default function ChatbotPopup() {
     setIsLoading(true);
 
     try {
-        // Add an empty model message to start streaming into.
         setMessages(prev => [...prev, { role: 'model', content: '' }]);
 
-        const stream = await chat(messages, input);
+        const stream = await chat(newMessages, input);
         const reader = stream.getReader();
         const decoder = new TextDecoder();
         
@@ -49,10 +48,9 @@ export default function ChatbotPopup() {
             
             const chunk = decoder.decode(value, { stream: true });
             
-            // Append the chunk to the last message (which is the model's response)
             setMessages(prev => {
                 const lastMessage = prev[prev.length - 1];
-                if (lastMessage.role === 'model') {
+                if (lastMessage && lastMessage.role === 'model') {
                     const updatedMessages = [...prev.slice(0, -1)];
                     updatedMessages.push({ role: 'model', content: lastMessage.content + chunk });
                     return updatedMessages;
@@ -63,7 +61,15 @@ export default function ChatbotPopup() {
 
     } catch (error) {
         console.error("Error fetching chatbot response:", error);
-        setMessages(prev => [...prev, { role: 'model', content: "Maaf, terjadi kesalahan. Coba lagi nanti." }]);
+        setMessages(prev => {
+            const lastMessage = prev[prev.length - 1];
+             if (lastMessage && lastMessage.role === 'model' && lastMessage.content === '') {
+                const updatedMessages = [...prev.slice(0, -1)];
+                updatedMessages.push({ role: 'model', content: "Maaf, terjadi kesalahan. Coba lagi nanti." });
+                return updatedMessages;
+            }
+            return [...prev, { role: 'model', content: "Maaf, terjadi kesalahan. Coba lagi nanti." }]
+        });
     } finally {
         setIsLoading(false);
     }
@@ -133,7 +139,7 @@ export default function ChatbotPopup() {
                     </div>
                   </div>
                 ))}
-                {isLoading && messages[messages.length - 1]?.role === 'user' && (
+                {isLoading && messages[messages.length - 1]?.role !== 'model' && (
                    <div className="flex gap-2 items-start justify-start">
                      <div className="p-2 bg-primary text-primary-foreground rounded-full">
                        <Bot className="w-5 h-5" />
@@ -161,7 +167,7 @@ export default function ChatbotPopup() {
                 size="icon"
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
                 onClick={handleSend}
-                disabled={isLoading}
+                disabled={isLoading || !input.trim()}
               >
                 <SendHorizonal className="h-4 w-4" />
                 <span className="sr-only">Kirim</span>
