@@ -159,8 +159,8 @@ const chatbotPrompt = ai.definePrompt({
 // == Main Chat Function ==
 
 export async function chat(history: Message[], prompt: string): Promise<Stream<string>> {
-  const { stream } = await ai.generateStream({
-      prompt: chatbotPrompt,
+  const { stream } = ai.generateStream({
+      prompt: {template: chatbotPrompt},
       history: history,
       input: prompt,
   });
