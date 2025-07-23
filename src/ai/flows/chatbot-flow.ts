@@ -4,14 +4,49 @@
 /**
  * @fileOverview A chatbot flow that can answer questions about PMII.
  *
- * This flow uses tools to access information about events and modules.
+ * This flow uses tools to access information about events, modules, and members.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getEvents } from './get-events';
-import { getModules } from './get-modules';
+import { getEvents as fetchEvents, type GetEventsOutput } from './get-events';
+import { getModules as fetchModules, type ModuleData } from './get-modules';
+import { getMembers as fetchMembers, type MemberData } from './get-members';
 import type { Message, Stream } from 'genkit';
+
+
+// == Schemas for Tooling ==
+// This tells the AI what the data looks like.
+
+const EventSchema = z.object({
+    name: z.string().optional().describe("The name or title of the event."),
+    description: z.string().optional().describe("A brief description of the event."),
+    src: z.string().optional().describe("A URL to an image for the event."),
+    alt: z.string().optional().describe("Alternative text for the event image."),
+    hint: z.string().optional().describe("A hint for AI image generation."),
+});
+
+const ModuleDataSchema = z.object({
+  id: z.string().describe('The unique identifier for the module.'),
+  title: z.string().describe('The title of the module.'),
+  description: z.string().describe('A description of what the module contains.'),
+  category: z.string().describe('The category of the module (e.g., Ideologi, Praktis).'),
+  fileUrl: z.string().optional().describe('The URL to the module file (if available).'),
+});
+
+const MemberDataSchema = z.object({
+  id: z.string().describe("The member's unique ID."),
+  fullName: z.string().describe("The full name of the member."),
+  nim: z.string().describe("The member's student identification number."),
+  faculty: z.string().describe("The member's faculty."),
+  year: z.string().describe("The member's enrollment year."),
+  email: z.string().email().describe("The member's email address."),
+  whatsapp: z.string().describe("The member's WhatsApp number."),
+});
+
+
+// == Tool Definitions ==
+// These are the capabilities we give to the AI.
 
 const getEventsTool = ai.defineTool(
   {
@@ -20,39 +55,66 @@ const getEventsTool = ai.defineTool(
     inputSchema: z.object({
       type: z.enum(['past', 'upcoming']).describe('The type of events to get.'),
     }),
-    outputSchema: z.any(),
+    outputSchema: z.object({ events: z.array(EventSchema) }),
   },
-  async (input) => getEvents(input)
+  async (input) => fetchEvents(input)
 );
 
 const getModulesTool = ai.defineTool(
   {
     name: 'getModules',
-    description: 'Get a list of available learning modules for PMII.',
+    description: 'Get a list of all available learning modules for PMII. Use this to answer questions about what modules exist or how many there are.',
     inputSchema: z.object({}),
-    outputSchema: z.any(),
+    outputSchema: z.object({ modules: z.array(ModuleDataSchema) }),
   },
-  async () => getModules()
+  async () => fetchModules()
 );
+
+const getMembersTool = ai.defineTool(
+    {
+        name: 'getMembers',
+        description: 'Get a list of all registered members of PMII. Use this to count the total number of members or answer questions about members.',
+        inputSchema: z.object({}),
+        outputSchema: z.object({ members: z.array(MemberDataSchema) }),
+    },
+    async () => fetchMembers()
+);
+
+
+// == AI System Prompt ==
+// This is the main instruction for the AI.
 
 const chatbotSystemPrompt = `You are an expert and friendly AI assistant named Sahabat/i AI, designed for the Pergerakan Mahasiswa Islam Indonesia (PMII).
 You can answer general knowledge questions just like a regular assistant.
-However, if a question is specifically about PMII, its events, or its learning modules, you MUST use the provided tools to get the information.
+However, if a question is specifically about PMII, its events, its learning modules, or its members, you MUST use the provided tools to get the information. For example, to answer "how many members are there?", you must use the getMembers tool. To answer "what modules are available?", you must use the getModules tool.
 You should always be friendly and helpful.
 You must answer in Bahasa Indonesia.
-When presenting information from tools, format it clearly using lists, but do not just repeat the raw output. Add context and present it in a conversational way.
+When presenting information from tools, format it clearly using lists or summaries, but do not just repeat the raw JSON output. Add context and present it in a conversational way.
 Keep your answers concise and to the point.
 If you don't know the answer to a specific PMII question and the tools don't provide it, say so honestly.
 `;
 
+
+// == Main Chat Function ==
+
 export async function chat(history: Message[], prompt: string): Promise<Stream<string>> {
-    const { stream } = await ai.generateStream({
+    const { stream, response } = await ai.generateStream({
       model: 'googleai/gemini-2.0-flash',
       history: history,
       prompt: prompt,
-      tools: [getEventsTool, getModulesTool],
+      tools: [getEventsTool, getModulesTool, getMembersTool],
       system: chatbotSystemPrompt,
     });
     
+    // Check for errors or empty output from the initial response promise
+    const result = await response;
+    if (!result.output) {
+        console.error("Chatbot AI did not produce an output.", result);
+        const { stream: errorStream } = await ai.generateStream({
+            prompt: "Please inform the user in Bahasa Indonesia that you encountered an unexpected error and cannot process their request at this time."
+        });
+        return errorStream;
+    }
+
     return stream;
 }
