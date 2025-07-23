@@ -7,8 +7,9 @@
  * - GetEventsOutput - The return type for the getEvents function.
  */
 
-import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { ai } from '@/ai/genkit';
+
 
 const EventSchema = z.object({
   src: z.string().optional(),
@@ -60,21 +61,10 @@ const upcomingEvents = [
     }
 ];
 
-const getEventsFlow = ai.defineFlow(
-  {
-    name: 'getEventsFlow',
-    inputSchema: GetEventsInputSchema,
-    outputSchema: GetEventsOutputSchema,
-  },
-  async ({ type }) => {
-    if (type === 'past') {
-      return { events: pastEvents };
-    } else {
-      return { events: upcomingEvents };
-    }
-  }
-);
-
 export async function getEvents(input: GetEventsInput): Promise<GetEventsOutput> {
-    return getEventsFlow(input);
+  if (input.type === 'past') {
+    return { events: pastEvents };
+  } else {
+    return { events: upcomingEvents };
+  }
 }
