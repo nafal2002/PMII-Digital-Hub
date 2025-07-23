@@ -8,8 +8,6 @@
  */
 
 import { z } from 'genkit';
-import { ai } from '@/ai/genkit';
-
 
 const EventSchema = z.object({
   src: z.string().optional(),
@@ -19,7 +17,7 @@ const EventSchema = z.object({
   description: z.string().optional(),
 });
 
-export const GetEventsInputSchema = z.object({
+const GetEventsInputSchema = z.object({
   type: z.enum(['past', 'upcoming']).describe('The type of events to get.'),
 });
 
