@@ -158,11 +158,10 @@ const chatbotPrompt = ai.definePrompt({
 
 // == Main Chat Function ==
 
-export async function chat(history: Message[], prompt: string): Promise<Stream<string>> {
+export async function chat(history: Message[]): Promise<Stream<string>> {
   const { stream } = ai.generateStream({
       prompt: {template: chatbotPrompt},
       history: history.filter(m => m.content?.[0]?.text?.trim() !== ''), // Ensure we dont send empty parts
-      input: prompt,
   });
   return stream;
 }

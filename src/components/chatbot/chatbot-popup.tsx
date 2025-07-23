@@ -44,18 +44,15 @@ export default function ChatbotPopup() {
     const userMessage: ChatMessage = { role: 'user', content: input };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
+    setInput('');
+    setIsLoading(true);
 
     const genkitHistory: Message[] = newMessages
         .filter(m => m.content.trim() !== '') // Filter out empty messages
         .map(m => ({ role: m.role, content: [{text: m.content}] }));
 
-    const currentInput = input;
-    
-    setInput('');
-    setIsLoading(true);
-
     try {
-        const stream = await chat(genkitHistory, currentInput);
+        const stream = await chat(genkitHistory);
         
         let isFirstChunk = true;
         let modelResponse = '';
