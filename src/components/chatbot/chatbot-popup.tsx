@@ -10,9 +10,14 @@ import { cn } from '@/lib/utils';
 import { chat } from '@/ai/flows/chatbot-flow';
 import type { Message } from 'genkit';
 
+const initialBotMessage: Message = {
+  role: 'model',
+  content: 'Assalamualaikum! Saya Sahabat/i AI. Ada yang bisa saya bantu terkait PMII atau pertanyaan umum lainnya?'
+};
+
 export default function ChatbotPopup() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([initialBotMessage]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -30,15 +35,13 @@ export default function ChatbotPopup() {
     if (input.trim() === '') return;
 
     const userMessage: Message = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMessage]);
-    const userInput = input;
+    const currentInput = input;
     setInput('');
     setIsLoading(true);
+    setMessages(prev => [...prev, userMessage, { role: 'model', content: '' }]);
 
     try {
-        setMessages(prev => [...prev, { role: 'model', content: '' }]);
-
-        const stream = await chat(messages, userInput);
+        const stream = await chat(messages, currentInput);
         
         const reader = stream.getReader();
         const decoder = new TextDecoder();
@@ -50,26 +53,26 @@ export default function ChatbotPopup() {
             const chunk = decoder.decode(value, { stream: true });
             
             setMessages(prev => {
-                const lastMessage = prev[prev.length - 1];
-                if (lastMessage && lastMessage.role === 'model') {
-                    const updatedMessages = [...prev.slice(0, -1)];
-                    updatedMessages.push({ role: 'model', content: lastMessage.content + chunk });
-                    return updatedMessages;
-                }
-                return [...prev, { role: 'model', content: chunk }];
+                const lastMessageIndex = prev.length - 1;
+                const updatedMessages = [...prev];
+                updatedMessages[lastMessageIndex] = {
+                    ...updatedMessages[lastMessageIndex],
+                    content: updatedMessages[lastMessageIndex].content + chunk,
+                };
+                return updatedMessages;
             });
         }
 
     } catch (error) {
         console.error("Error fetching chatbot response:", error);
-        setMessages(prev => {
-            const lastMessage = prev[prev.length - 1];
-             if (lastMessage && lastMessage.role === 'model' && lastMessage.content === '') {
-                const updatedMessages = [...prev.slice(0, -1)];
-                updatedMessages.push({ role: 'model', content: "Maaf, terjadi kesalahan. Coba lagi nanti." });
-                return updatedMessages;
-            }
-            return [...prev, { role: 'model', content: "Maaf, terjadi kesalahan. Coba lagi nanti." }]
+         setMessages(prev => {
+            const lastMessageIndex = prev.length - 1;
+            const updatedMessages = [...prev];
+            updatedMessages[lastMessageIndex] = {
+                ...updatedMessages[lastMessageIndex],
+                content: "Maaf, terjadi kesalahan. Coba lagi nanti.",
+            };
+            return updatedMessages;
         });
     } finally {
         setIsLoading(false);
@@ -133,23 +136,17 @@ export default function ChatbotPopup() {
                         'rounded-lg px-4 py-2 max-w-xs break-words whitespace-pre-wrap',
                         message.role === 'user'
                           ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
+                          : 'bg-muted',
+                        message.role === 'model' && message.content === '' && 'hidden'
                       )}
                     >
                       {message.content}
+                      {isLoading && message.role === 'model' && message.content === '' && (
+                         <Loader2 className="w-5 h-5 animate-spin"/>
+                      )}
                     </div>
                   </div>
                 ))}
-                {isLoading && messages[messages.length - 1]?.role === 'user' && (
-                   <div className="flex gap-2 items-start justify-start">
-                     <div className="p-2 bg-primary text-primary-foreground rounded-full">
-                       <Bot className="w-5 h-5" />
-                     </div>
-                     <div className="rounded-lg px-4 py-2 bg-muted flex items-center">
-                        <Loader2 className="w-5 h-5 animate-spin"/>
-                     </div>
-                   </div>
-                )}
               </div>
             </ScrollArea>
           </CardContent>

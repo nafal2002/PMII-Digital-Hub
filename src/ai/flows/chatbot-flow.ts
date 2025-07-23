@@ -15,7 +15,7 @@ import type { Message } from 'genkit';
 const getEventsTool = ai.defineTool(
   {
     name: 'getEvents',
-    description: 'Get a list of upcoming and past events.',
+    description: 'Get a list of upcoming and past events for PMII.',
     inputSchema: z.object({
       type: z.enum(['past', 'upcoming']).describe('The type of events to get.'),
     }),
@@ -27,27 +27,24 @@ const getEventsTool = ai.defineTool(
 const getModulesTool = ai.defineTool(
   {
     name: 'getModules',
-    description: 'Get a list of available learning modules.',
+    description: 'Get a list of available learning modules for PMII.',
     inputSchema: z.object({}),
     outputSchema: z.any(),
   },
   async () => getModules()
 );
 
-const chatbotSystemPrompt = `You are an expert and friendly assistant for the Pergerakan Mahasiswa Islam Indonesia (PMII).
-Your name is Sahabat/i AI.
-You can answer questions about PMII, its events, and learning modules.
-You should be friendly and helpful.
-When asked about events or modules, you should use the provided tools to get the information.
-If you don't know the answer, you should say so.
-Keep your answers concise and to the point.
+const chatbotSystemPrompt = `You are an expert and friendly AI assistant named Sahabat/i AI, designed for the Pergerakan Mahasiswa Islam Indonesia (PMII).
+You can answer general knowledge questions just like a regular assistant.
+However, if a question is specifically about PMII, its events, or its learning modules, you MUST use the provided tools to get the information.
+You should always be friendly and helpful.
 You must answer in Bahasa Indonesia.
-Analyze the user's question to determine what tool to use.
-When using tool output, present the information in a clear and easy-to-read format. For example, by using lists.
-Do not just repeat the tool output. Your response should be a complete sentence and add context.
+When presenting information from tools, format it clearly using lists, but do not just repeat the raw output. Add context and present it in a conversational way.
+Keep your answers concise and to the point.
+If you don't know the answer to a specific PMII question and the tools don't provide it, say so honestly.
 `;
 
-export async function chat(history: Message[], prompt: string): Promise<ReadableStream<string>> {
+export async function chat(history: Message[], prompt: string) {
     const { stream } = ai.generateStream({
       model: 'googleai/gemini-2.0-flash',
       history: history,
@@ -55,17 +52,5 @@ export async function chat(history: Message[], prompt: string): Promise<Readable
       tools: [getEventsTool, getModulesTool],
       system: chatbotSystemPrompt,
     });
-
-    const outputStream = new ReadableStream({
-        async start(controller) {
-            for await (const chunk of stream) {
-                if (chunk.output) {
-                   controller.enqueue(chunk.output);
-                }
-            }
-            controller.close();
-        }
-    });
-
-    return outputStream;
+    return stream;
 }
