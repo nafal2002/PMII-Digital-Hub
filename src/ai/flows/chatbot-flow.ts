@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -45,12 +46,25 @@ If you don't know the answer to a specific PMII question and the tools don't pro
 `;
 
 export async function chat(history: Message[], prompt: string) {
-    const { stream } = ai.generateStream({
+    const { stream } = await ai.generateStream({
       model: 'googleai/gemini-2.0-flash',
       history: history,
       prompt: prompt,
       tools: [getEventsTool, getModulesTool],
       system: chatbotSystemPrompt,
     });
-    return stream;
+    
+    const reader = stream.getReader();
+    const decoder = new TextDecoder();
+    
+    return new ReadableStream({
+        async pull(controller) {
+            const { value, done } = await reader.read();
+            if (done) {
+                controller.close();
+            } else {
+                controller.enqueue(decoder.decode(value, { stream: true }));
+            }
+        }
+    });
 }

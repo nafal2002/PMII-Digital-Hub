@@ -42,48 +42,46 @@ export default function ChatbotPopup() {
     if (input.trim() === '') return;
 
     const userMessage: ChatMessage = { role: 'user', content: input };
-    const genkitHistory: Message[] = messages.map(m => ({ role: m.role, content: m.content }));
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+
+    const genkitHistory: Message[] = newMessages.map(m => ({ role: m.role, content: m.content }));
     const currentInput = input;
     
-    setMessages(prev => [...prev, userMessage, { role: 'model', content: '' }]);
     setInput('');
     setIsLoading(true);
 
     try {
         const stream = await chat(genkitHistory, currentInput);
         
-        const reader = stream.getReader();
-        const decoder = new TextDecoder();
+        let modelResponse = '';
+        setMessages(prev => [...prev, { role: 'model', content: modelResponse }]);
 
-        while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            
-            const chunk = decoder.decode(value, { stream: true });
-            
-            setMessages(prev => {
+        for await (const chunk of stream) {
+            modelResponse += chunk;
+             setMessages(prev => {
                 const lastMessageIndex = prev.length - 1;
                 const updatedMessages = [...prev];
-                const lastMessage = updatedMessages[lastMessageIndex];
-                if (lastMessage && lastMessage.role === 'model') {
+                if (updatedMessages[lastMessageIndex]?.role === 'model') {
                     updatedMessages[lastMessageIndex] = {
-                        ...lastMessage,
-                        content: lastMessage.content + chunk,
+                        ...updatedMessages[lastMessageIndex],
+                        content: modelResponse,
                     };
                 }
                 return updatedMessages;
             });
         }
-
     } catch (error) {
         console.error("Error fetching chatbot response:", error);
          setMessages(prev => {
             const lastMessageIndex = prev.length - 1;
             const updatedMessages = [...prev];
-            updatedMessages[lastMessageIndex] = {
-                ...updatedMessages[lastMessageIndex],
-                content: "Maaf, terjadi kesalahan. Coba lagi nanti.",
-            };
+            if (updatedMessages[lastMessageIndex]?.role === 'model') {
+                updatedMessages[lastMessageIndex] = {
+                    ...updatedMessages[lastMessageIndex],
+                    content: "Maaf, terjadi kesalahan. Coba lagi nanti.",
+                };
+            }
             return updatedMessages;
         });
     } finally {
@@ -149,11 +147,11 @@ export default function ChatbotPopup() {
                         message.role === 'user'
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted',
-                        message.role === 'model' && message.content === '' && 'hidden'
+                        isLoading && index === messages.length - 1 && message.role === 'model' && message.content === ''
                       )}
                     >
                       {message.content}
-                      {isLoading && message.role === 'model' && message.content === '' && (
+                      {isLoading && index === messages.length - 1 && message.role === 'model' && message.content === '' && (
                          <Loader2 className="w-5 h-5 animate-spin"/>
                       )}
                     </div>
