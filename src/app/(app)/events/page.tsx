@@ -12,7 +12,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 
 const pastEvents = [
@@ -22,84 +21,92 @@ const pastEvents = [
     { src: "https://placehold.co/600x400.png", alt: "Rapat Anggota", hint: "group discussion" },
 ]
 
+type Event = typeof pastEvents[0];
+
 export default function EventsPage() {
     const [date, setDate] = useState<Date | undefined>(new Date());
+    const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
     return (
-    <div className="space-y-8">
-        <div>
-            <h1 className="text-3xl font-bold font-headline">Kegiatan & Agenda</h1>
-            <p className="text-muted-foreground">Kalender acara, pendaftaran, dan dokumentasi kegiatan PMII.</p>
+    <>
+        <div className="space-y-8">
+            <div>
+                <h1 className="text-3xl font-bold font-headline">Kegiatan & Agenda</h1>
+                <p className="text-muted-foreground">Kalender acara, pendaftaran, dan dokumentasi kegiatan PMII.</p>
+            </div>
+            <Tabs defaultValue="calendar">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="calendar">Kalender Kegiatan</TabsTrigger>
+                    <TabsTrigger value="documentation">Dokumentasi</TabsTrigger>
+                </TabsList>
+                <TabsContent value="calendar">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline">Kalender Kegiatan</CardTitle>
+                            <CardDescription>Jadwal acara dan kegiatan yang akan datang.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex justify-center">
+                            <Calendar
+                                mode="single"
+                                selected={date}
+                                onSelect={setDate}
+                                className="rounded-md border"
+                                disabled={(date) => date < new Date("1900-01-01")}
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                <TabsContent value="documentation">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline">Dokumentasi Kegiatan</CardTitle>
+                            <CardDescription>Galeri foto dan video dari acara-acara yang telah berlangsung.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {pastEvents.map((event, index) => (
+                                    <div key={index} className="overflow-hidden rounded-lg cursor-pointer" onClick={() => setSelectedEvent(event)}>
+                                        <Image
+                                            src={event.src}
+                                            alt={event.alt}
+                                            width={600}
+                                            height={400}
+                                            data-ai-hint={event.hint}
+                                            className="h-auto w-full object-cover transition-transform hover:scale-105"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
         </div>
-        <Tabs defaultValue="calendar">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="calendar">Kalender Kegiatan</TabsTrigger>
-                <TabsTrigger value="documentation">Dokumentasi</TabsTrigger>
-            </TabsList>
-            <TabsContent value="calendar">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline">Kalender Kegiatan</CardTitle>
-                        <CardDescription>Jadwal acara dan kegiatan yang akan datang.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex justify-center">
-                        <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={setDate}
-                            className="rounded-md border"
-                            disabled={(date) => date < new Date("1900-01-01")}
-                        />
-                    </CardContent>
-                </Card>
-            </TabsContent>
-            <TabsContent value="documentation">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline">Dokumentasi Kegiatan</CardTitle>
-                        <CardDescription>Galeri foto dan video dari acara-acara yang telah berlangsung.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {pastEvents.map((event, index) => (
-                                <Dialog key={index}>
-                                    <DialogTrigger asChild>
-                                        <div className="overflow-hidden rounded-lg cursor-pointer">
-                                            <Image
-                                                src={event.src}
-                                                alt={event.alt}
-                                                width={600}
-                                                height={400}
-                                                data-ai-hint={event.hint}
-                                                className="h-auto w-full object-cover transition-transform hover:scale-105"
-                                            />
-                                        </div>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-[625px]">
-                                        <DialogHeader>
-                                            <DialogTitle className="font-headline">{event.alt}</DialogTitle>
-                                            <DialogDescription>
-                                                Dokumentasi kegiatan yang telah berlangsung.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <div className="rounded-lg overflow-hidden border">
-                                           <Image
-                                                src={event.src}
-                                                alt={event.alt}
-                                                width={600}
-                                                height={400}
-                                                data-ai-hint={event.hint}
-                                                className="h-auto w-full object-cover"
-                                            />
-                                        </div>
-                                    </DialogContent>
-                                </Dialog>
-                            ))}
+
+        <Dialog open={!!selectedEvent} onOpenChange={(isOpen) => !isOpen && setSelectedEvent(null)}>
+            <DialogContent className="sm:max-w-[625px]">
+                {selectedEvent && (
+                    <>
+                        <DialogHeader>
+                            <DialogTitle className="font-headline">{selectedEvent.alt}</DialogTitle>
+                            <DialogDescription>
+                                Dokumentasi kegiatan yang telah berlangsung.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="rounded-lg overflow-hidden border">
+                        <Image
+                                src={selectedEvent.src}
+                                alt={selectedEvent.alt}
+                                width={600}
+                                height={400}
+                                data-ai-hint={selectedEvent.hint}
+                                className="h-auto w-full object-cover"
+                            />
                         </div>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-        </Tabs>
-    </div>
+                    </>
+                )}
+            </DialogContent>
+        </Dialog>
+    </>
     )
 }
