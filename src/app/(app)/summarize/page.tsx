@@ -7,14 +7,14 @@ export default function SummarizePage() {
       <div>
         <h1 className="text-3xl font-bold font-headline">Ringkasan Dokumen (AI)</h1>
         <p className="text-muted-foreground">
-          Gunakan alat bantu AI untuk merangkum dan memahami konteks dokumen PMII dengan cepat.
+          Punya dokumen panjang seperti notulensi rapat atau LPJ? Alat ini membantu Anda membuat rangkumannya secara otomatis.
         </p>
       </div>
       <Card>
         <CardHeader>
-            <CardTitle className="font-headline">Alat Ringkasan Dokumen</CardTitle>
+            <CardTitle className="font-headline">Alat Ringkasan Otomatis</CardTitle>
             <CardDescription>
-                Salin dan tempel teks dari dokumen Anda ke dalam kotak di bawah ini, lalu klik "Ringkas" untuk mendapatkan rangkumannya.
+                Salin teks dari dokumen Anda (misalnya: .pdf, .docx), tempel di bawah, dan biarkan AI membuat ringkasan poin-poin pentingnya untuk Anda.
             </CardDescription>
         </CardHeader>
         <CardContent>
