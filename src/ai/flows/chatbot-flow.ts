@@ -11,7 +11,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { getEvents } from './get-events';
 import { getModules } from './get-modules';
-import type { Message } from 'genkit';
+import type { Message, Stream } from 'genkit';
 
 const getEventsTool = ai.defineTool(
   {
@@ -45,7 +45,7 @@ Keep your answers concise and to the point.
 If you don't know the answer to a specific PMII question and the tools don't provide it, say so honestly.
 `;
 
-export async function chat(history: Message[], prompt: string) {
+export async function chat(history: Message[], prompt: string): Promise<Stream<string>> {
     const { stream } = await ai.generateStream({
       model: 'googleai/gemini-2.0-flash',
       history: history,
@@ -54,17 +54,5 @@ export async function chat(history: Message[], prompt: string) {
       system: chatbotSystemPrompt,
     });
     
-    const reader = stream.getReader();
-    const decoder = new TextDecoder();
-    
-    return new ReadableStream({
-        async pull(controller) {
-            const { value, done } = await reader.read();
-            if (done) {
-                controller.close();
-            } else {
-                controller.enqueue(decoder.decode(value, { stream: true }));
-            }
-        }
-    });
+    return stream;
 }
