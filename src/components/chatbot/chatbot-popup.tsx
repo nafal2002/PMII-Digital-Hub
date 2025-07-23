@@ -42,13 +42,12 @@ export default function ChatbotPopup() {
     if (input.trim() === '') return;
 
     const userMessage: ChatMessage = { role: 'user', content: input };
-    // Create the history in the format Genkit expects, right before the call
     const genkitHistory: Message[] = messages.map(m => ({ role: m.role, content: m.content }));
     const currentInput = input;
     
+    setMessages(prev => [...prev, userMessage, { role: 'model', content: '' }]);
     setInput('');
     setIsLoading(true);
-    setMessages(prev => [...prev, userMessage, { role: 'model', content: '' }]);
 
     try {
         const stream = await chat(genkitHistory, currentInput);
