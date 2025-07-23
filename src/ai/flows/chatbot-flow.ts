@@ -156,25 +156,41 @@ If you don't know the answer to a specific PMII question and the tools don't pro
 // == Main Chat Function ==
 
 export async function chat(history: Message[], prompt: string): Promise<Stream<string>> {
-    const { stream, response } = await ai.generateStream({
-      model: 'googleai/gemini-2.0-flash',
-      history: history,
-      prompt: prompt,
-      tools: [getEventsTool, getModulesTool, getMembersTool, getDocumentsTool],
-      system: chatbotSystemPrompt,
-    });
-    
-    // Check for errors or empty output from the initial response promise
-    const result = await response;
-    if (!result.output) {
-        console.error("Chatbot AI did not produce an output.", result);
-        const { stream: errorStream } = await ai.generateStream({
-            prompt: "Please inform the user in Bahasa Indonesia that you encountered an unexpected error and cannot process their request at this time."
-        });
-        return errorStream;
-    }
+  try {
+      const { stream, response } = await ai.generateStream({
+        model: 'googleai/gemini-2.0-flash',
+        history: history,
+        prompt: prompt,
+        tools: [getEventsTool, getModulesTool, getMembersTool, getDocumentsTool],
+        system: chatbotSystemPrompt,
+      });
+      
+      const result = await response;
+      if (!result.output) {
+          console.error("Chatbot AI did not produce an output.", result);
+          // Return a simple text stream with the error message
+          const errorStream = new ReadableStream({
+              start(controller) {
+                  controller.enqueue("Maaf, saya tidak dapat memproses permintaan Anda saat ini. Silakan coba lagi nanti.");
+                  controller.close();
+              }
+          });
+          // Cast to Stream<string>
+          return errorStream as Stream<string>;
+      }
 
-    return stream;
+      return stream;
+
+  } catch (error) {
+      console.error("Error during AI generation stream:", error);
+      // Return a simple text stream with the error message
+      const errorStream = new ReadableStream({
+          start(controller) {
+              controller.enqueue("Maaf, terjadi kesalahan pada server. Coba lagi nanti.");
+              controller.close();
+          }
+      });
+      // Cast to Stream<string>
+      return errorStream as Stream<string>;
+  }
 }
-
-    

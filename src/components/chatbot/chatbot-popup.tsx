@@ -46,18 +46,17 @@ export default function ChatbotPopup() {
     setMessages(newMessages);
 
     // This history is only for the server action call, not stored in state
-    const genkitHistory: Message[] = newMessages.map(m => ({ role: m.role, content: m.content }));
+    const genkitHistory: Message[] = newMessages.map(m => ({ role: m.role, content: [{text: m.content}] }));
     const currentInput = input;
     
     setInput('');
     setIsLoading(true);
 
     try {
+        setMessages(prev => [...prev, { role: 'model', content: '' }]);
         const stream = await chat(genkitHistory, currentInput);
         
         let modelResponse = '';
-        setMessages(prev => [...prev, { role: 'model', content: modelResponse }]);
-
         for await (const chunk of stream) {
             modelResponse += chunk;
              setMessages(prev => {
@@ -148,11 +147,11 @@ export default function ChatbotPopup() {
                         message.role === 'user'
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted',
-                        isLoading && index === messages.length - 1 && message.role === 'model' && message.content === ''
+                        isLoading && index === messages.length - 1 && message.role === 'model' && !message.content
                       )}
                     >
                       {message.content}
-                      {isLoading && index === messages.length - 1 && message.role === 'model' && message.content === '' && (
+                      {isLoading && index === messages.length - 1 && message.role === 'model' && !message.content && (
                          <Loader2 className="w-5 h-5 animate-spin"/>
                       )}
                     </div>
