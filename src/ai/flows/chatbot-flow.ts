@@ -9,7 +9,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { getEvents as fetchEvents, type GetEventsOutput } from './get-events';
 import { getModules as fetchModules, type ModuleData } from './get-modules';
 import { getMembers as fetchMembers, type MemberData } from './get-members';
 import { getDocuments as fetchDocuments, type DocumentData } from './get-documents';
@@ -26,6 +25,8 @@ const EventSchema = z.object({
     alt: z.string().optional().describe("Alternative text for the event image."),
     hint: z.string().optional().describe("A hint for AI image generation."),
 });
+export type EventData = z.infer<typeof EventSchema>;
+
 
 const ModuleDataSchema = z.object({
   id: z.string().describe('The unique identifier for the module.'),
@@ -52,6 +53,46 @@ const DocumentDataSchema = z.object({
 });
 
 
+// == Tool Data Sources ==
+
+const pastEvents: EventData[] = [
+  {
+    src: 'https://placehold.co/600x400.png',
+    alt: 'PKD 2023',
+    hint: 'student meeting',
+  },
+  {
+    src: 'https://placehold.co/600x400.png',
+    alt: 'Seminar Kebangsaan',
+    hint: 'conference presentation',
+  },
+  {
+    src: 'https://placehold.co/600x400.png',
+    alt: 'Aksi Sosial',
+    hint: 'community volunteering',
+  },
+  {
+    src: 'https://placehold.co/600x400.png',
+    alt: 'Rapat Anggota',
+    hint: 'group discussion',
+  },
+];
+
+const upcomingEvents: EventData[] = [
+    {
+        name: "Pelatihan Kader Dasar (PKD) 2024",
+        description: "Pendaftaran PKD angkatan ke-XXI telah dibuka. Segera daftarkan diri Anda sebelum kuota terpenuhi."
+    }
+];
+
+async function getEvents(input: { type: 'past' | 'upcoming' }): Promise<EventData[]> {
+  if (input.type === 'past') {
+    return pastEvents;
+  } else {
+    return upcomingEvents;
+  }
+}
+
 // == Tool Definitions ==
 // These are the capabilities we give to the AI.
 
@@ -62,9 +103,9 @@ const getEventsTool = ai.defineTool(
     inputSchema: z.object({
       type: z.enum(['past', 'upcoming']).describe('The type of events to get.'),
     }),
-    outputSchema: z.object({ events: z.array(EventSchema) }),
+    outputSchema: z.array(EventSchema),
   },
-  async (input) => fetchEvents(input)
+  async (input) => getEvents(input)
 );
 
 const getModulesTool = ai.defineTool(
@@ -135,3 +176,5 @@ export async function chat(history: Message[], prompt: string): Promise<Stream<s
 
     return stream;
 }
+
+    

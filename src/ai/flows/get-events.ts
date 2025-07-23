@@ -8,61 +8,28 @@
  */
 
 import { z } from 'genkit';
-
-const EventSchema = z.object({
-  src: z.string().optional(),
-  alt: z.string().optional(),
-  hint: z.string().optional(),
-  name: z.string().optional(),
-  description: z.string().optional(),
-});
+import type { EventData } from './chatbot-flow';
 
 const GetEventsInputSchema = z.object({
   type: z.enum(['past', 'upcoming']).describe('The type of events to get.'),
 });
 
 const GetEventsOutputSchema = z.object({
-  events: z.array(EventSchema),
+  events: z.custom<EventData[]>(),
 });
 
 export type GetEventsInput = z.infer<typeof GetEventsInputSchema>;
 export type GetEventsOutput = z.infer<typeof GetEventsOutputSchema>;
 
-// Static data for events as the app doesn't have a database for them yet.
-const pastEvents = [
-  {
-    src: 'https://placehold.co/600x400.png',
-    alt: 'PKD 2023',
-    hint: 'student meeting',
-  },
-  {
-    src: 'https://placehold.co/600x400.png',
-    alt: 'Seminar Kebangsaan',
-    hint: 'conference presentation',
-  },
-  {
-    src: 'https://placehold.co/600x400.png',
-    alt: 'Aksi Sosial',
-    hint: 'community volunteering',
-  },
-  {
-    src: 'https://placehold.co/600x400.png',
-    alt: 'Rapat Anggota',
-    hint: 'group discussion',
-  },
-];
-
-const upcomingEvents = [
-    {
-        name: "Pelatihan Kader Dasar (PKD) 2024",
-        description: "Pendaftaran PKD angkatan ke-XXI telah dibuka. Segera daftarkan diri Anda sebelum kuota terpenuhi."
-    }
-];
-
+// This function is now a placeholder as the data is co-located with the chatbot tool
+// for better reliability. This file is kept to satisfy imports but the core logic
+// has been moved to chatbot-flow.ts.
 export async function getEvents(input: GetEventsInput): Promise<GetEventsOutput> {
   if (input.type === 'past') {
-    return { events: pastEvents };
+    return { events: [] };
   } else {
-    return { events: upcomingEvents };
+    return { events: [] };
   }
 }
+
+    
