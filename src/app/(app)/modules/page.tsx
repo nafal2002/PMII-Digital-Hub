@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpenCheck, Download, Video, BookDashed } from "lucide-react";
+import { BookOpenCheck, Download, Video, BookDashed, FileText } from "lucide-react";
 import type { ModuleData } from '@/ai/flows/get-modules';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -41,6 +41,55 @@ const localModules: ModuleData[] = [
     category: "Praktis",
     fileUrl: "", // Biarkan kosong jika file belum ada, tombol unduh akan nonaktif
   },
+  {
+    id: "5",
+    title: "Hasil Muspimnas Tulungagung 2022",
+    description: "Kumpulan hasil dan keputusan dari Musyawarah Pimpinan Nasional PMII yang diselenggarakan di Tulungagung pada tahun 2022.",
+    category: "Musyawarah Nasional",
+    fileUrl: "/modules/HASIL MUSPIMNAS PMII TULUNGAGUNG 2022-1.pdf"
+  },
+  {
+    id: "6",
+    title: "Materi Teknik Persidangan",
+    description: "Panduan dan materi mengenai teknik-teknik persidangan yang efektif untuk Pelatihan Kader Dasar (PKD).",
+    category: "Praktis",
+    fileUrl: "/modules/MATERI TEKNIK-PERSIDANGAN PDK.pdf"
+  },
+  {
+    id: "7",
+    title: "Modul MAPABA Proletariat",
+    description: "Modul untuk Masa Penerimaan Anggota Baru (MAPABA) dengan fokus pada analisis dan kesadaran kelas proletariat.",
+    category: "MAPABA",
+    fileUrl: "/modules/MODUL MAPABA PROLETARIAT.pdf"
+  },
+  {
+    id: "8",
+    title: "Materi Nahdlatunnisa",
+    description: "Materi khusus keperempuanan dari KOPRI PMII Kabupaten Bekasi, membahas peran dan tantangan kader putri.",
+    category: "KOPRI",
+    fileUrl: "/modules/Nahdlatunnisa - Kab Bekasi-1.pdf"
+  },
+  {
+    id: "9",
+    title: "Dasar-Dasar PMII",
+    description: "Presentasi yang mencakup tiga pilar utama PMII: aspek historis, landasan konstitusi, dan paradigma pergerakan.",
+    category: "Dasar Organisasi",
+    fileUrl: "/modules/PMII (HISTORIS, KONSTITUSI, PARADIGMA).ppt"
+  },
+  {
+    id: "10",
+    title: "Materi Ke-KOPRI-an",
+    description: "Presentasi dasar mengenai Korps PMII Putri (KOPRI), mencakup sejarah, peran, dan pedoman organisasi.",
+    category: "KOPRI",
+    fileUrl: "/modules/Ke-KOPRI-an.ppt"
+  },
+  {
+    id: "11",
+    title: "Dasar-Dasar Aswaja",
+    description: "Presentasi mengenai Ahlussunnah wal Jama'ah (Aswaja) sebagai landasan ideologis dan amaliah warga PMII.",
+    category: "Ideologi",
+    fileUrl: "/modules/ASWAJA.ppt"
+  }
 ];
 // -------------------------
 
