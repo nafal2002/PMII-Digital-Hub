@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -102,7 +103,7 @@ function ModuleList() {
         <BookDashed className="h-4 w-4" />
         <AlertTitle>Belum Ada Modul</AlertTitle>
         <AlertDescription>
-          Saat ini belum ada modul kaderisasi yang ditambahkan. Silakan tambahkan secara manual di dalam kode.
+          Saat ini belum ada modul materi yang ditambahkan. Silakan tambahkan secara manual di dalam kode.
         </AlertDescription>
       </Alert>
     );
@@ -138,13 +139,13 @@ export default function ModulesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold font-headline">Kaderisasi & Modul Digital</h1>
-        <p className="text-muted-foreground">Pusat materi pembelajaran dan modul kaderisasi PMII.</p>
+        <h1 className="text-3xl font-bold font-headline">Materi & Modul Digital</h1>
+        <p className="text-muted-foreground">Pusat materi pembelajaran dan modul digital PMII.</p>
       </div>
       
       <Card>
           <CardHeader>
-              <CardTitle className="font-headline flex items-center"><BookOpenCheck className="mr-3 text-primary"/>Modul Kaderisasi</CardTitle>
+              <CardTitle className="font-headline flex items-center"><BookOpenCheck className="mr-3 text-primary"/>Modul Materi</CardTitle>
               <CardDescription>Kumpulan modul untuk mendukung proses kaderisasi yang dikelola secara lokal.</CardDescription>
           </CardHeader>
           <CardContent>

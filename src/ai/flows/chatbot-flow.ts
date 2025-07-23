@@ -14,7 +14,7 @@ const qaMap: { [key: string]: string } = {
   'halo': 'Assalamualaikum! Ada yang bisa saya bantu terkait PMII?',
   'hai': 'Assalamualaikum! Ada yang bisa saya bantu terkait PMII?',
   'ada kegiatan apa': 'Kegiatan terdekat adalah Pelatihan Kader Dasar (PKD) 2024. Informasi lebih lanjut bisa dilihat di halaman Kegiatan.',
-  'modul apa saja': 'Ada banyak modul kaderisasi yang tersedia, seperti modul NDP, AD/ART, Manajemen Aksi, dan materi KOPRI. Semuanya bisa diunduh di halaman Kaderisasi.',
+  'modul apa saja': 'Ada banyak modul materi yang tersedia, seperti modul NDP, AD/ART, Manajemen Aksi, dan materi KOPRI. Semuanya bisa diunduh di halaman Materi.',
   'dokumen di arsip': 'Halaman Arsip berisi dokumen penting seperti AD/ART, Notulensi Rapat, LPJ Kegiatan, dan SK Pengurus. Silakan kunjungi halaman Arsip untuk mengunduhnya.',
   'apa itu mapaba': 'MAPABA adalah singkatan dari Masa Penerimaan Anggota Baru. Ini adalah gerbang awal untuk menjadi anggota PMII.',
   'apa itu pkd': 'PKD adalah singkatan dari Pelatihan Kader Dasar, yaitu jenjang kaderisasi formal kedua di PMII setelah MAPABA.',
@@ -22,7 +22,7 @@ const qaMap: { [key: string]: string } = {
   'apa itu aswaja': 'Aswaja (Ahlussunnah wal Jama\'ah) adalah paham keagamaan yang menjadi landasan ideologi PMII, merujuk pada pemikiran Imam Asy\'ari dan Imam Maturidi.',
   'apa itu kopri': 'KOPRI adalah singkatan dari Korps PMII Putri, badan semi-otonom yang berfungsi sebagai wadah kaderisasi dan pergerakan bagi kader putri PMII.',
   'siapa ketua umum': 'Ketua Umum PB PMII saat ini adalah Sahabat Muhammad Abdullah Syukri. Untuk informasi pengurus tingkat cabang, silakan cek dokumen SK di halaman Arsip.',
-  'sejarah pmii': 'PMII didirikan pada 17 April 1960 di Surabaya. Sejarah lengkapnya bisa Anda temukan pada dokumen di halaman Kaderisasi atau Arsip.',
+  'sejarah pmii': 'PMII didirikan pada 17 April 1960 di Surabaya. Sejarah lengkapnya bisa Anda temukan pada dokumen di halaman Materi atau Arsip.',
   'terima kasih': 'Sama-sama! Senang bisa membantu.',
 };
 
@@ -40,7 +40,7 @@ async function getDynamicAnswer(question: string): Promise<string | null> {
         try {
             const { modules } = await getModules();
             const moduleCount = modules.length;
-            return `Terdapat ${moduleCount} modul yang tersedia di halaman Kaderisasi.`;
+            return `Terdapat ${moduleCount} modul yang tersedia di halaman Materi.`;
         } catch (error) {
             console.error('Error fetching module count:', error);
             return 'Maaf, saya tidak dapat mengambil data jumlah modul saat ini.';

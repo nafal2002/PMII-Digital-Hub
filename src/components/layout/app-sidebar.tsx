@@ -1,3 +1,4 @@
+
 'use client'
 
 import Link from 'next/link'
@@ -16,7 +17,7 @@ import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/', label: 'Beranda', icon: Home },
-  { href: '/modules', label: 'Kaderisasi', icon: BookOpen },
+  { href: '/modules', label: 'Materi', icon: BookOpen },
   { href: '/events', label: 'Kegiatan', icon: CalendarDays },
   { href: '/membership', label: 'Keanggotaan', icon: Users },
   { href: '/archive', label: 'Arsip', icon: Archive },
