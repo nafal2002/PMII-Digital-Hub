@@ -10,14 +10,20 @@ import { cn } from '@/lib/utils';
 import { chat } from '@/ai/flows/chatbot-flow';
 import type { Message } from 'genkit';
 
-const initialBotMessage: Message = {
+// Define a simple, serializable message type for the client
+interface ChatMessage {
+  role: 'user' | 'model';
+  content: string;
+}
+
+const initialBotMessage: ChatMessage = {
   role: 'model',
   content: 'Assalamualaikum! Saya Sahabat/i AI. Ada yang bisa saya bantu terkait PMII atau pertanyaan umum lainnya?'
 };
 
 export default function ChatbotPopup() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([initialBotMessage]);
+  const [messages, setMessages] = useState<ChatMessage[]>([initialBotMessage]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -34,14 +40,16 @@ export default function ChatbotPopup() {
   const handleSend = async () => {
     if (input.trim() === '') return;
 
-    const userMessage: Message = { role: 'user', content: input };
+    const userMessage: ChatMessage = { role: 'user', content: input };
     const currentInput = input;
+    const currentMessages: Message[] = messages.map(m => ({ role: m.role, content: m.content }));
+    
     setInput('');
     setIsLoading(true);
     setMessages(prev => [...prev, userMessage, { role: 'model', content: '' }]);
 
     try {
-        const stream = await chat(messages, currentInput);
+        const stream = await chat(currentMessages, currentInput);
         
         const reader = stream.getReader();
         const decoder = new TextDecoder();
@@ -55,10 +63,13 @@ export default function ChatbotPopup() {
             setMessages(prev => {
                 const lastMessageIndex = prev.length - 1;
                 const updatedMessages = [...prev];
-                updatedMessages[lastMessageIndex] = {
-                    ...updatedMessages[lastMessageIndex],
-                    content: updatedMessages[lastMessageIndex].content + chunk,
-                };
+                const lastMessage = updatedMessages[lastMessageIndex];
+                if (lastMessage && lastMessage.role === 'model') {
+                    updatedMessages[lastMessageIndex] = {
+                        ...lastMessage,
+                        content: lastMessage.content + chunk,
+                    };
+                }
                 return updatedMessages;
             });
         }
